@@ -430,12 +430,29 @@
   }
 
   function showDashboard(user) {
-    document.getElementById("authLayout").style.display = "none";
-    const label = ROLE_LABELS[user.role] || "Dashboard";
-    document.getElementById("dashTitle").textContent = label;
-    document.getElementById("dashSub").textContent = "Signed in as " + user.name + " (" + user.email + ")";
-    document.getElementById("dashboardView").classList.add("visible");
+  document.getElementById("authLayout").style.display = "none";
+  const label = ROLE_LABELS[user.role] || "Dashboard";
+  document.getElementById("dashTitle").textContent = label;
+  document.getElementById("dashSub").textContent = "Signed in as " + user.name + " (" + user.email + ")";
+  document.getElementById("dashboardView").classList.add("visible");
+
+  const existingLink = document.getElementById("manageListingsLink");
+  if (existingLink) existingLink.remove();
+
+  if (user.role === "restaurant") {
+    const link = document.createElement("a");
+    link.id = "manageListingsLink";
+    link.href = "/listings-view";
+    link.textContent = "Manage Listings →";
+    link.style.marginTop = "16px";
+    link.style.display = "inline-block";
+    link.style.color = "#1D4ED8";
+    link.style.fontWeight = "600";
+    link.style.fontSize = "14px";
+    link.style.textDecoration = "none";
+    document.querySelector(".dash-card").appendChild(link);
   }
+}
 
   function showAuth() {
     document.getElementById("dashboardView").classList.remove("visible");

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RePlate — Your Listings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F9FC;
+    --navy: #0B2545;
+    --blue: #1D4ED8;
+    --slate: #8DA9C4;
+    --white: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    background: var(--navy);
+    color: var(--white);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand-mark {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+  }
+  .brand-mark span { color: var(--slate); }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .topbar-user {
+    font-size: 13px;
+    color: var(--slate);
+  }
+
+  .back-link, .logout-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    color: var(--white);
+    padding: 7px 16px;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .back-link:hover, .logout-btn:hover {
+    border-color: var(--white);
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* Layout */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  .page-header {
+    margin-bottom: 32px;
+  }
+
+  .page-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .page-header p {
+    color: #5A7189;
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .grid-layout { grid-template-columns: 1fr; }
+  }
+
+  /* Form card */
+  .form-card {
+    background: var(--white);
+    border: 1px solid #E4E9F2;
+    border-radius: 14px;
+    padding: 28px;
+    position: sticky;
+    top: 32px;
+  }
+
+  .form-card h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  .field { margin-bottom: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 5px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1.5px solid #DDE5F0;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--navy);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--blue);
+  }
+
+  .field textarea { resize: vertical; min-height: 60px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 11px 0;
+    background: var(--blue);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: filter 0.15s ease;
+  }
+  .submit-btn:hover { filter: brightness(1.08); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .error-msg {
+    display: none;
+    background: #FDECEC;
+    color: #B42318;
+    border: 1px solid #F5C2C0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+  .error-msg.visible { display: block; }
+
+  .success-msg {
+    display: none;
+    background: #E8F4EE;
+    color: #14532D;
+    border: 1px solid #B7DFC5;
+    padding: 9px 12px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+  .success-msg.visible { display: block; }
+
+  /* Listings grid */
+  .listings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .listings-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .listings-count {
+    font-size: 13px;
+    color: var(--slate);
+    font-weight: 600;
+  }
+
+  .listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .empty-state {
+    background: var(--white);
+    border: 1.5px dashed #DDE5F0;
+    border-radius: 14px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--slate);
+    font-size: 14px;
+    grid-column: 1 / -1;
+  }
+
+  .listing-card {
+    background: var(--white);
+    border: 1px solid #E4E9F2;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .listing-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .listing-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .listing-category {
+    font-size: 12px;
+    color: var(--slate);
+    text-transform: capitalize;
+    margin-top: 2px;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-available { background: #E6EEFB; color: var(--blue); }
+  .badge-reserved { background: #F1F3F7; color: var(--slate); }
+  .badge-sold_donated { background: #E8F4EE; color: #14532D; }
+  .badge-completed { background: #E8F4EE; color: #14532D; }
+  .badge-expired { background: #FDECEC; color: #B42318; }
+
+  .listing-desc {
+    font-size: 13px;
+    color: #5A7189;
+    line-height: 1.5;
+  }
+
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .price-original {
+    font-size: 13px;
+    color: var(--slate);
+    text-decoration: line-through;
+  }
+
+  .price-discounted {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  .listing-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12.5px;
+    color: #5A7189;
+    border-top: 1px solid #EEF2F8;
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .listing-meta span strong {
+    color: var(--navy);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand-mark">RePlate<span>.</span></div>
+  <div class="topbar-right">
+    <span class="topbar-user" id="userLabel"></span>
+    <a class="back-link" href="/">Dashboard</a>
+    <button class="logout-btn" onclick="handleLogout()">Log out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Your Food Listings</h1>
+    <p>Create a listing and track its status here.</p>
+  </div>
+
+  <div class="grid-layout">
+    <!-- Create listing form -->
+    <div class="form-card">
+      <h2>New listing</h2>
+
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="success-msg" id="successMsg"></div>
+
+      <div class="field">
+        <label>Food name</label>
+        <input type="text" id="foodName" placeholder="Leftover bread loaves" />
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea id="description" placeholder="12 loaves, baked this morning"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Category</label>
+          <input type="text" id="category" placeholder="bakery" />
+        </div>
+        <div class="field">
+          <label>Listing type</label>
+          <select id="listingType">
+            <option value="sale">Sale</option>
+            <option value="donation">Donation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Quantity</label>
+          <input type="number" id="quantity" min="1" placeholder="12" />
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <input type="text" id="unit" placeholder="loaf" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Original price</label>
+          <input type="number" id="originalPrice" step="0.01" min="0" placeholder="5.00" />
+        </div>
+        <div class="field">
+          <label>Discount %</label>
+          <input type="number" id="discountPercentage" min="0" max="100" placeholder="50" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Expiry date &amp; time</label>
+        <input type="datetime-local" id="expiryDate" />
+      </div>
+
+      <div class="field">
+        <label>Pickup location</label>
+        <input type="text" id="pickupLocation" placeholder="123 Main St" />
+      </div>
+
+      <button class="submit-btn" id="createBtn" onclick="handleCreateListing()">Create listing</button>
+    </div>
+
+    <!-- Listings display -->
+    <div>
+      <div class="listings-header">
+        <h2>Active &amp; past listings</h2>
+        <span class="listings-count" id="listingsCount">0 listings</span>
+      </div>
+      <div class="listings-grid" id="listingsGrid">
+        <div class="empty-state">No listings yet — create your first one on the left.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STATUS_LABELS = {
+    available: "Available",
+    reserved: "Reserved",
+    sold_donated: "Sold / Donated",
+    completed: "Completed",
+    expired: "Expired",
+  };
+
+  function getToken() {
+    return localStorage.getItem("session_token");
+  }
+
+  async function guardPage() {
+    const token = getToken();
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+    try {
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) {
+        window.location.href = "/";
+        return;
+      }
+      const user = await res.json();
+      if (user.role !== "restaurant") {
+        window.location.href = "/";
+        return;
+      }
+      document.getElementById("userLabel").textContent = user.business_name || user.name;
+      loadListings();
+    } catch (err) {
+      window.location.href = "/";
+    }
+  }
+
+  async function handleLogout() {
+    const token = getToken();
+    if (token) {
+      try {
+        await fetch("/auth/logout", { method: "POST", headers: { "Authorization": token } });
+      } catch (err) {}
+    }
+    localStorage.removeItem("session_token");
+    window.location.href = "/";
+  }
+
+  function showError(msg) {
+    hideMessages();
+    const el = document.getElementById("errorMsg");
+    el.textContent = msg;
+    el.classList.add("visible");
+  }
+
+  function showSuccess(msg) {
+    hideMessages();
+    const el = document.getElementById("successMsg");
+    el.textContent = msg;
+    el.classList.add("visible");
+  }
+
+  function hideMessages() {
+    document.getElementById("errorMsg").classList.remove("visible");
+    document.getElementById("successMsg").classList.remove("visible");
+  }
+
+  function renderListings(listings) {
+    const grid = document.getElementById("listingsGrid");
+    document.getElementById("listingsCount").textContent =
+      listings.length + (listings.length === 1 ? " listing" : " listings");
+
+    if (listings.length === 0) {
+      grid.innerHTML = '<div class="empty-state">No listings yet — create your first one on the left.</div>';
+      return;
+    }
+
+    grid.innerHTML = listings.map(listing => {
+      const badgeClass = "badge-" + listing.status;
+      const statusLabel = STATUS_LABELS[listing.status] || listing.status;
+      const expiry = new Date(listing.expiry_date);
+      const expiryStr = expiry.toLocaleString(undefined, {
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+
+      return `
+        <div class="listing-card">
+          <div class="listing-card-top">
+            <div>
+              <div class="listing-name">${escapeHtml(listing.food_name)}</div>
+              <div class="listing-category">${escapeHtml(listing.category)}</div>
+            </div>
+            <span class="badge ${badgeClass}">${statusLabel}</span>
+          </div>
+          <div class="listing-desc">${escapeHtml(listing.description)}</div>
+          <div class="price-row">
+            <span class="price-discounted">$${listing.discounted_price.toFixed(2)}</span>
+            ${listing.discount_percentage > 0
+              ? `<span class="price-original">$${listing.original_price.toFixed(2)}</span>`
+              : ``}
+          </div>
+          <div class="listing-meta">
+            <span>Available: <strong>${listing.available_quantity} / ${listing.quantity} ${escapeHtml(listing.unit)}</strong></span>
+            <span>Pickup: <strong>${escapeHtml(listing.pickup_location)}</strong></span>
+            <span>Expires: <strong>${expiryStr}</strong></span>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function loadListings() {
+    try {
+      const res = await fetch("/listings/mine", { headers: { "Authorization": getToken() } });
+      if (!res.ok) return;
+      const listings = await res.json();
+      renderListings(listings);
+    } catch (err) {
+      // silently ignore — grid keeps its previous state
+    }
+  }
+
+  async function handleCreateListing() {
+    hideMessages();
+    const btn = document.getElementById("createBtn");
+    btn.disabled = true;
+    btn.textContent = "Creating...";
+
+    const expiryLocal = document.getElementById("expiryDate").value;
+
+    const payload = {
+      food_name: document.getElementById("foodName").value.trim(),
+      description: document.getElementById("description").value.trim(),
+      category: document.getElementById("category").value.trim(),
+      listing_type: document.getElementById("listingType").value,
+      quantity: parseInt(document.getElementById("quantity").value, 10),
+      unit: document.getElementById("unit").value.trim(),
+      original_price: parseFloat(document.getElementById("originalPrice").value),
+      discount_percentage: parseFloat(document.getElementById("discountPercentage").value || "0"),
+      expiry_date: expiryLocal ? new Date(expiryLocal).toISOString() : null,
+      pickup_location: document.getElementById("pickupLocation").value.trim(),
+    };
+
+    try {
+      const res = await fetch("/listings/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": getToken(),
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(typeof data.detail === "string" ? data.detail : "Could not create listing.");
+        return;
+      }
+
+      showSuccess("Listing created.");
+      document.getElementById("foodName").value = "";
+      document.getElementById("description").value = "";
+      document.getElementById("category").value = "";
+      document.getElementById("quantity").value = "";
+      document.getElementById("unit").value = "";
+      document.getElementById("originalPrice").value = "";
+      document.getElementById("discountPercentage").value = "";
+      document.getElementById("expiryDate").value = "";
+      document.getElementById("pickupLocation").value = "";
+
+      loadListings();
+    } catch (err) {
+      showError("Could not reach the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Create listing";
+    }
+  }
+
+  guardPage();
+</script>
+
+</body>
+</html>
