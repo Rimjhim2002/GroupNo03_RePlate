@@ -1,4 +1,4 @@
-from models.food_listing import FoodListing, ListingStatus
+from app.models.food_listing import FoodListing, ListingStatus
  
  
 async def get_prioritized_listings(restaurant_id: str | None = None, limit: int = 50) -> list[FoodListing]:

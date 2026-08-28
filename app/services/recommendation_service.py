@@ -1,5 +1,5 @@
-from models.food_listing import FoodListing, ListingStatus
-from models.food_recommendation import FoodRecommendation, RecommendationType
+from app.models.food_listing import FoodListing, ListingStatus
+from app.models.food_recommendation import FoodRecommendation, RecommendationType
 
 URGENT_DONATE_THRESHOLD_HOURS = 3
 DONATE_THRESHOLD_HOURS = 8
