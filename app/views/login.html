@@ -225,7 +225,7 @@
     justify-content: center;
     flex-direction: column;
     gap: 20px;
-    background: var(--bg);
+    background: linear-gradient(135deg, #F7F9FC 0%, #EEF5FF 100%);
   }
 
   .dashboard-view.visible {
@@ -234,15 +234,16 @@
 
   .dash-card {
     background: var(--white);
-    border: 1px solid #E4E9F2;
+    border: 1px solid #D8E4F3;
+    border-top: 4px solid var(--blue);
     border-radius: 16px;
-    padding: 56px 64px;
+    padding: 40px 48px;
     text-align: center;
     box-shadow: 0 4px 24px rgba(11,37,69,0.06);
   }
 
   .dash-eyebrow {
-    color: var(--slate);
+    color: var(--blue);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.06em;
@@ -263,6 +264,58 @@
     color: #5A7189;
     font-size: 14px;
   }
+
+  .dash-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+    text-align: left;
+  }
+
+  .metric {
+    border: 1px solid #E4E9F2;
+    border-radius: 8px;
+    padding: 14px;
+    background: var(--white);
+    color: inherit;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .metric:hover {
+    border-color: var(--blue);
+  }
+
+  .metric strong { display: block; font-size: 22px; color: var(--navy); }
+  .metric strong { color: var(--blue); }
+  .metric span { color: #5A7189; font-size: 12px; }
+
+  .admin-review { margin-top: 24px; text-align: left; }
+  .admin-review h3 { font-size: 16px; margin-bottom: 10px; color: var(--navy); }
+  .review-link {
+    margin: 8px 0 14px;
+    padding: 9px 12px;
+    border: 1px solid var(--blue);
+    border-radius: 7px;
+    background: var(--blue);
+    color: var(--white);
+    font: 600 13px inherit;
+    cursor: pointer;
+  }
+  .review-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid #EEF2F8;
+    padding: 12px 0;
+    font-size: 13px;
+  }
+  .review-row button { padding: 7px 10px; border: 0; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .approve-btn { background: #E8F4EE; color: #14532D; }
+  .reject-btn { background: #FDECEC; color: #B42318; }
 
   .logout-btn {
     background: transparent;
@@ -391,6 +444,12 @@
     <div class="dash-eyebrow">RePlate</div>
     <div class="dash-title" id="dashTitle">Dashboard</div>
     <div class="dash-sub" id="dashSub">Logged in successfully.</div>
+    <div class="dash-metrics" id="dashMetrics"></div>
+    <div class="admin-review" id="adminReview" style="display:none">
+      <h3>Listings awaiting verification</h3>
+      <button class="review-link" type="button" onclick="openReview('pending_verifications')">Review pending verifications</button>
+      <div id="pendingListings"></div>
+    </div>
   </div>
   <button class="logout-btn" onclick="handleLogout()">Log out</button>
 </div>
@@ -429,35 +488,177 @@
     document.getElementById("errorMsg").classList.remove("visible");
   }
 
-  function showDashboard(user) {
-  document.getElementById("authLayout").style.display = "none";
-  const label = ROLE_LABELS[user.role] || "Dashboard";
-  document.getElementById("dashTitle").textContent = label;
-  document.getElementById("dashSub").textContent = "Signed in as " + user.name + " (" + user.email + ")";
-  document.getElementById("dashboardView").classList.add("visible");
+function showDashboard(user) {
+    document.getElementById("authLayout").style.display = "none";
 
-  const existingLink = document.getElementById("manageListingsLink");
-  if (existingLink) existingLink.remove();
+    const label = ROLE_LABELS[user.role] || "Dashboard";
 
-  if (user.role === "restaurant") {
-    const link = document.createElement("a");
-    link.id = "manageListingsLink";
-    link.href = "/listings-view";
-    link.textContent = "Manage Listings →";
-    link.style.marginTop = "16px";
-    link.style.display = "inline-block";
-    link.style.color = "#1D4ED8";
-    link.style.fontWeight = "600";
-    link.style.fontSize = "14px";
-    link.style.textDecoration = "none";
-    document.querySelector(".dash-card").appendChild(link);
-  }
+    document.getElementById("dashTitle").textContent = label;
+
+    document.getElementById("dashSub").textContent =
+        "Signed in as " + user.name + " (" + user.email + ")";
+
+    document.getElementById("dashboardView").classList.add("visible");
+
+    loadDashboard(user);
+
+    const dashCard = document.querySelector(".dash-card");
+
+    const oldMarketplaceLink =
+        document.getElementById("marketplaceLink");
+
+    if (oldMarketplaceLink) {
+        oldMarketplaceLink.remove();
+    }
+
+    const oldManageLink =
+        document.getElementById("manageListingsLink");
+
+    if (oldManageLink) {
+        oldManageLink.remove();
+    }
+
+    if (user.role === "restaurant") {
+
+        const link = document.createElement("a");
+
+        link.id = "manageListingsLink";
+        link.href = "/listings-view";
+        link.textContent = "Manage Listings →";
+
+        link.style.marginTop = "16px";
+        link.style.display = "inline-block";
+        link.style.color = "#1D4ED8";
+        link.style.fontWeight = "600";
+        link.style.fontSize = "14px";
+        link.style.textDecoration = "none";
+
+        dashCard.appendChild(link);
+    }
+
+    if (user.role === "consumer" || user.role === "ngo") {
+
+      
+        let marketplaceLink =
+            document.getElementById("marketplaceLink");
+
+        if (!marketplaceLink) {
+
+            marketplaceLink = document.createElement("a");
+
+            marketplaceLink.id = "marketplaceLink";
+            marketplaceLink.href = "/marketplace";
+            marketplaceLink.textContent = "Grab & Save";
+
+            marketplaceLink.style.marginTop = "16px";
+            marketplaceLink.style.display = "inline-block";
+            marketplaceLink.style.color = "#1D4ED8";
+            marketplaceLink.style.fontWeight = "600";
+            marketplaceLink.style.textDecoration = "none";
+
+            dashCard.appendChild(marketplaceLink);
+        }
+    }
 }
 
-  function showAuth() {
+
+
+  const DASHBOARD_FIELDS = {
+    restaurant: ["active_listings", "active_reservations", "completed_transactions", "revenue_recovered", "meals_donated"],
+    consumer: ["active_reservations", "completed_transactions", "meals_received", "money_saved"],
+    ngo: ["active_reservations", "completed_transactions", "meals_claimed", "donations_fulfilled"],
+    administrator: ["total_users", "pending_verifications", "pending_listings"],
+  };
+
+  function fieldLabel(field) {
+    return field.replaceAll("_", " ").replace(/\b\w/g, letter => letter.toUpperCase());
+  }
+
+  async function loadDashboard(user) {
+    const response = await fetch(`/dashboard/${user.role === "administrator" ? "admin" : user.role}`, {
+      headers: { "Authorization": localStorage.getItem("session_token") },
+    });
+    if (!response.ok) return;
+    const dashboard = await response.json();
+    document.getElementById("dashMetrics").innerHTML = DASHBOARD_FIELDS[user.role]
+      .map(field => `<button class="metric" type="button" onclick="openReview('${field}')"><strong>${dashboard[field] ?? 0}</strong><span>${fieldLabel(field)}</span></button>`).join("");
+    if (user.role === "administrator") loadPendingListings();
+  }
+
+  async function loadPendingListings() {
+    const panel = document.getElementById("adminReview");
+    panel.style.display = "block";
+    const response = await fetch("/dashboard/admin/listings/pending", {
+      headers: { "Authorization": localStorage.getItem("session_token") },
+    });
+    if (!response.ok) return;
+    const listings = await response.json();
+    document.getElementById("pendingListings").innerHTML = listings.length
+      ? listings.map(listing => `<div class="review-row"><span><strong>${escapeHtml(listing.food_name)}</strong><br>${escapeHtml(listing.category)} · ${listing.quantity} ${escapeHtml(listing.unit)}</span><span><button class="approve-btn" onclick="reviewListing('${listing.id}', true)">Approve</button> <button class="reject-btn" onclick="reviewListing('${listing.id}', false)">Reject</button></span></div>`).join("")
+      : "<div class='dash-sub'>No listings awaiting review.</div>";
+  }
+
+  async function openReview(field) {
+    if (field === "pending_listings") {
+      await loadPendingListings();
+      document.getElementById("adminReview").scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    if (field !== "pending_verifications") return;
+    const panel = document.getElementById("adminReview");
+    panel.style.display = "block";
+    panel.querySelector("h3").textContent = "Users awaiting verification";
+    const response = await fetch("/dashboard/admin/users/pending", { headers: { "Authorization": localStorage.getItem("session_token") } });
+    if (!response.ok) return;
+    const users = await response.json();
+    document.getElementById("pendingListings").innerHTML = users.length
+      ? users.map(user => `<div class="review-row"><span><strong>${escapeHtml(user.business_name || user.organization_name || user.name)}</strong><br>${escapeHtml(user.email)} · ${escapeHtml(user.role)}</span><span><button class="approve-btn" onclick="reviewUser('${user.id}', true)">Verify</button> <button class="reject-btn" onclick="reviewUser('${user.id}', false)">Reject</button></span></div>`).join("")
+      : "<div class='dash-sub'>No users awaiting verification.</div>";
+  }
+
+  async function reviewUser(id, approved) {
+    const response = await fetch(`/dashboard/admin/users/${id}/verify?approved=${approved}`, {
+      method: "PATCH",
+      headers: { "Authorization": localStorage.getItem("session_token") },
+    });
+    if (response.ok) {
+      loadDashboard({ role: "administrator" });
+      openReview("pending_verifications");
+    }
+  }
+
+  async function reviewListing(id, approved) {
+    const response = await fetch(`/dashboard/admin/listings/${id}/verify?approved=${approved}`, {
+      method: "PATCH",
+      headers: { "Authorization": localStorage.getItem("session_token") },
+    });
+    if (response.ok) loadPendingListings();
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+function showAuth() {
     document.getElementById("dashboardView").classList.remove("visible");
     document.getElementById("authLayout").style.display = "flex";
-  }
+
+    const marketplaceLink =
+        document.getElementById("marketplaceLink");
+
+    if (marketplaceLink) {
+        marketplaceLink.remove();
+    }
+
+    const manageListingsLink =
+        document.getElementById("manageListingsLink");
+
+    if (manageListingsLink) {
+        manageListingsLink.remove();
+    }
+}
 
   async function handleLogin() {
     hideError();

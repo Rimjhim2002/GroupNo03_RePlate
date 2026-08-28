@@ -4,7 +4,7 @@ from typing import List, Optional
 from beanie import Document, Link
 from pydantic import BaseModel, Field
 
-from app.models.enums import ListingStatus, ListingType
+from app.models.enums import ListingApprovalStatus, ListingStatus, ListingType
 from app.models.user import User
 
 
@@ -38,6 +38,7 @@ class FoodListing(Document):
     longitude: Optional[float] = None
 
     status: ListingStatus = ListingStatus.AVAILABLE
+    approval_status: ListingApprovalStatus = ListingApprovalStatus.PENDING
 
     pickup_slots: List[PickupSlot] = []
 
@@ -54,7 +55,10 @@ class FoodListing(Document):
 
     def get_remaining_shelf_life_hours(self) -> float:
         """Hours left before this listing expires (0 if already expired)."""
-        delta = self.expiry_date - datetime.now(timezone.utc)
+        expiry_date = self.expiry_date
+        if expiry_date.tzinfo is None:
+            expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+        delta = expiry_date - datetime.now(timezone.utc)
         return max(delta.total_seconds() / 3600, 0.0)
 
     def get_discounted_price(self) -> float:

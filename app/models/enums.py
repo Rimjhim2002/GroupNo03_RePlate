@@ -8,6 +8,11 @@ class ListingStatus(str,Enum):
     SOLD_DONATED ="sold_donated"
     COMPLETED ="completed"
     EXPIRED ="expired"
+
+class ListingApprovalStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 class WaitlistStatus(str, Enum):
     WAITING ="waiting"
     NOTIFIED ="notified"
@@ -31,6 +36,7 @@ class NotificationType(str,Enum):
     WAITLIST_NEXT ="waitlist_next"
     RATING_RECEIVED ="rating_received"
     EXPIRY_ALERT ="expiry_alert"
+    DUPLICATE_LISTING = "duplicate_listing"
 
 class ReportType(str,Enum):
     IMPACT_REPORT ="impact_report"

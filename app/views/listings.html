@@ -326,6 +326,27 @@
     color: var(--navy);
     font-weight: 600;
   }
+
+  .listing-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .listing-actions select,
+  .listing-actions button {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 7px;
+    border: 1px solid #DDE5F0;
+    border-radius: 7px;
+    background: var(--white);
+    color: var(--navy);
+    font: 600 12px inherit;
+    cursor: pointer;
+  }
+
+  .listing-actions button { background: #E6EEFB; border-color: #E6EEFB; }
 </style>
 </head>
 <body>
@@ -527,10 +548,21 @@
               : ``}
           </div>
           <div class="listing-meta">
+            <span>Admin review: <strong>${listing.approval_status}</strong></span>
             <span>Available: <strong>${listing.available_quantity} / ${listing.quantity} ${escapeHtml(listing.unit)}</strong></span>
             <span>Pickup: <strong>${escapeHtml(listing.pickup_location)}</strong></span>
             <span>Expires: <strong>${expiryStr}</strong></span>
           </div>
+          ${listing.status !== "expired" ? `
+            <div class="listing-actions">
+              <select aria-label="Update listing status" onchange="updateStatus('${listing.id}', this.value)">
+                ${Object.entries(STATUS_LABELS).map(([value, label]) =>
+                  `<option value="${value}" ${value === listing.status ? "selected" : ""}>${label}</option>`
+                ).join("")}
+              </select>
+              <button type="button" onclick="applySuggestedDiscount('${listing.id}')">Suggest discount</button>
+            </div>
+          ` : ""}
         </div>
       `;
     }).join("");
@@ -551,6 +583,35 @@
     } catch (err) {
       // silently ignore — grid keeps its previous state
     }
+  }
+
+  async function updateStatus(id, status) {
+    const res = await fetch(`/listings/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "Authorization": getToken() },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) showError("Could not update listing status.");
+    else { showSuccess("Listing status updated."); loadListings(); }
+  }
+
+  async function applySuggestedDiscount(id) {
+    const suggestion = await fetch(`/listings/${id}/discount-suggestion`, {
+      headers: { "Authorization": getToken() },
+    });
+    if (!suggestion.ok) {
+      const error = await suggestion.json().catch(() => ({}));
+      showError(error.detail || "Could not calculate a discount suggestion.");
+      return;
+    }
+    const { discount_percentage } = await suggestion.json();
+    const res = await fetch(`/listings/${id}/discount`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "Authorization": getToken() },
+      body: JSON.stringify({ discount_percentage }),
+    });
+    if (!res.ok) showError("Could not apply discount.");
+    else { showSuccess(`Suggested ${discount_percentage}% discount applied.`); loadListings(); }
   }
 
   async function handleCreateListing() {
@@ -586,7 +647,10 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showError(typeof data.detail === "string" ? data.detail : "Could not create listing.");
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map(error => `${error.loc?.at(-1) || "field"}: ${error.msg}`).join("; ")
+          : data.detail;
+        showError(detail || "Could not create listing.");
         return;
       }
 

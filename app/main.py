@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.database import init_db
@@ -6,10 +7,16 @@ from app.routes import auth_routes, dashboard_routes
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.routes import auth_routes, dashboard_routes, food_listing_routes
+from app.services.expiry_monitor import monitor_expiry
 @asynccontextmanager
 async def lifespan(app:FastAPI):
     await init_db()
-    yield
+    monitor_task = asyncio.create_task(monitor_expiry())
+    try:
+        yield
+    finally:
+        monitor_task.cancel()
+        await asyncio.gather(monitor_task, return_exceptions=True)
 
 
 app = FastAPI(title="RePlate API",lifespan=lifespan)
@@ -31,3 +38,8 @@ async def serve_login_page():
 @app.get("/listings-view")
 async def serve_listings_page():
     return FileResponse("app/views/listings.html")
+
+
+@app.get("/marketplace")
+async def serve_marketplace_page():
+    return FileResponse("app/views/marketplace.html")

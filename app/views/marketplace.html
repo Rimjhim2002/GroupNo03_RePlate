@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RePlate - Marketplace</title>
+  <style>
+    body { margin: 0; padding: 32px; background: #F7F9FC; color: #0B2545; font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 1000px; margin: auto; } h1 { margin-bottom: 6px; } p { color: #5A7189; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 24px; }
+    .card { background: white; border: 1px solid #DDE5F0; border-radius: 10px; padding: 20px; }
+    .price { font-size: 22px; font-weight: 700; color: #1D4ED8; margin: 14px 0; }
+    input, button { padding: 9px; border: 1px solid #DDE5F0; border-radius: 6px; font: inherit; } input { width: 55px; }
+    button { background: #1D4ED8; color: white; border: 0; cursor: pointer; font-weight: 600; }
+    .message { margin-top: 18px; color: #14532D; }
+  </style>
+</head>
+<body><main>
+  <h1>Available surplus food</h1><p>Choose a listing and reserve what you need.</p>
+  <div id="message" class="message"></div><div id="grid" class="grid"></div>
+</main>
+<script>
+  const token = localStorage.getItem("session_token");
+  async function load() {
+    const response = await fetch("/listings/available");
+    const listings = await response.json();
+    document.getElementById("grid").innerHTML = listings.length ? listings.map(listing => `
+      <article class="card"><h2>${escapeHtml(listing.food_name)}</h2><p>${escapeHtml(listing.description)}</p>
+      <p>${listing.available_quantity} ${escapeHtml(listing.unit)} · ${escapeHtml(listing.pickup_location)}</p>
+      <div class="price">$${listing.discounted_price.toFixed(2)}</div>
+      <input id="qty-${listing.id}" type="number" min="1" max="${listing.available_quantity}" value="1" />
+      <button onclick="claim('${listing.id}')">Reserve food</button></article>`).join("") : "<p>No approved listings are available right now.</p>";
+  }
+  async function claim(id) {
+    if (!token) { document.getElementById("message").textContent = "Please log in before reserving food."; return; }
+    const response = await fetch(`/listings/${id}/claim`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": token }, body: JSON.stringify({ quantity: Number(document.getElementById(`qty-${id}`).value) }) });
+    const data = await response.json(); document.getElementById("message").textContent = response.ok ? data.message : (data.detail || "Could not reserve food."); if (response.ok) load();
+  }
+  function escapeHtml(value) { const div = document.createElement("div"); div.textContent = value; return div.innerHTML; }
+  load();
+</script></body></html>

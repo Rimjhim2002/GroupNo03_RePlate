@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-from app.models.enums import ListingStatus, ListingType
+from app.models.enums import ListingApprovalStatus, ListingStatus, ListingType
 
 
 class FoodListingCreate(BaseModel):
@@ -17,6 +17,18 @@ class FoodListingCreate(BaseModel):
     pickup_location: str
     latitude: Optional[float] =None
     longitude: Optional[float] =None
+
+
+class FoodListingDiscountUpdate(BaseModel):
+    discount_percentage: float
+
+
+class FoodListingStatusUpdate(BaseModel):
+    status: ListingStatus
+
+
+class FoodListingClaim(BaseModel):
+    quantity: int = 1
 
 
 class FoodListingRead(BaseModel):
@@ -35,4 +47,5 @@ class FoodListingRead(BaseModel):
     expiry_date:datetime
     pickup_location:str
     status:ListingStatus
+    approval_status: ListingApprovalStatus
     created_at:datetime

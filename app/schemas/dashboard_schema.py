@@ -26,3 +26,4 @@ class AdminDashboardResponse(BaseModel):
     user_id:str
     total_users:int
     pending_verifications:int
+    pending_listings:int = 0
