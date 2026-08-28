@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RePlate — Recommendations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F9FC;
+    --navy: #0B2545;
+    --blue: #1D4ED8;
+    --slate: #8DA9C4;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--navy); min-height: 100vh; }
+ 
+  .topbar {
+    background: var(--navy); color: var(--white); padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand-mark { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px; }
+  .brand-mark span { color: var(--slate); }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-user { font-size: 13px; color: var(--slate); }
+  .back-link, .logout-btn, .refresh-btn {
+    background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
+    padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: all 0.15s ease;
+  }
+  .back-link:hover, .logout-btn:hover, .refresh-btn:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+ 
+  .page { max-width: 900px; margin: 0 auto; padding: 40px 32px 80px; }
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; gap: 16px; }
+  .page-header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  .page-header p { color: #5A7189; font-size: 14px; margin-top: 6px; }
+ 
+  .refresh-btn-page {
+    background: var(--blue); color: var(--white); border: none; padding: 9px 18px; border-radius: 8px;
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .refresh-btn-page:hover { filter: brightness(1.08); }
+  .refresh-btn-page:disabled { opacity: 0.6; cursor: not-allowed; }
+ 
+  .listing-card {
+    background: var(--white); border: 1px solid #E4E9F2; border-radius: 14px; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
+  }
+  .listing-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .listing-name { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; }
+  .listing-meta-line { font-size: 12.5px; color: #5A7189; margin-top: 2px; }
+ 
+  .badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .badge-discount_sale { background: #E6EEFB; color: var(--blue); }
+  .badge-donate { background: #FFF4E5; color: #B45309; }
+  .badge-urgent_donate { background: #FDECEC; color: #B42318; }
+  .badge-none { background: #F1F3F7; color: var(--slate); }
+ 
+  .reason-text { font-size: 13px; color: #5A7189; line-height: 1.5; }
+ 
+  .empty-state {
+    background: var(--white); border: 1.5px dashed #DDE5F0; border-radius: 14px;
+    padding: 48px 24px; text-align: center; color: var(--slate); font-size: 14px;
+  }
+</style>
+</head>
+<body>
+ 
+<div class="topbar">
+  <div class="brand-mark">RePlate<span>.</span></div>
+  <div class="topbar-right">
+    <span class="topbar-user" id="userLabel"></span>
+    <a class="back-link" href="/">Dashboard</a>
+    <button class="logout-btn" onclick="handleLogout()">Log out</button>
+  </div>
+</div>
+ 
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Smart Recommendations</h1>
+      <p>For each active listing, RePlate suggests whether to discount it or donate it based on how much time is left.</p>
+    </div>
+    <button class="refresh-btn-page" id="refreshBtn" onclick="handleRefresh()">Refresh</button>
+  </div>
+ 
+  <div id="listingsContainer">
+    <div class="empty-state">Loading…</div>
+  </div>
+</div>
+ 
+<script>
+  const RECOMMENDATION_LABELS = {
+    discount_sale: "Discount & sell",
+    donate: "Recommend donating",
+    urgent_donate: "Donate now",
+  };
+ 
+  function getToken() {
+    return localStorage.getItem("session_token");
+  }
+ 
+  async function guardPage() {
+    const token = getToken();
+    if (!token) { window.location.href = "/"; return; }
+    try {
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) { window.location.href = "/"; return; }
+      const user = await res.json();
+      if (user.role !== "restaurant") { window.location.href = "/"; return; }
+      document.getElementById("userLabel").textContent = user.business_name || user.name;
+      loadRecommendations();
+    } catch (err) {
+      window.location.href = "/";
+    }
+  }
+ 
+  async function handleLogout() {
+    const token = getToken();
+    if (token) {
+      try { await fetch("/auth/logout", { method: "POST", headers: { "Authorization": token } }); } catch (err) {}
+    }
+    localStorage.removeItem("session_token");
+    window.location.href = "/";
+  }
+ 
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
+  }
+ 
+  async function loadRecommendations() {
+    const container = document.getElementById("listingsContainer");
+    try {
+      const listingsRes = await fetch("/listings/mine", { headers: { "Authorization": getToken() } });
+      if (!listingsRes.ok) return;
+      const listings = await listingsRes.json();
+ 
+      if (listings.length === 0) {
+        container.innerHTML = '<div class="empty-state">You have no listings yet — create one first.</div>';
+        return;
+      }
+ 
+      const cards = await Promise.all(listings.map(async (listing) => {
+        let recommendation = null;
+        try {
+          const recRes = await fetch(`/api/lifecycle/listings/${listing.id}/recommendation`, {
+            headers: { "Authorization": getToken() },
+          });
+          if (recRes.ok) recommendation = await recRes.json();
+        } catch (err) {
+          // no recommendation yet for this listing — that's fine, just show it plain
+        }
+        return renderCard(listing, recommendation);
+      }));
+ 
+      container.innerHTML = cards.join("");
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state">Could not load your listings.</div>';
+    }
+  }
+ 
+  function renderCard(listing, recommendation) {
+    const badgeClass = recommendation ? `badge-${recommendation.recommendation_type}` : "badge-none";
+    const badgeLabel = recommendation ? RECOMMENDATION_LABELS[recommendation.recommendation_type] : "No recommendation yet";
+ 
+    return `
+      <div class="listing-card">
+        <div class="listing-card-top">
+          <div>
+            <div class="listing-name">${escapeHtml(listing.food_name)}</div>
+            <div class="listing-meta-line">${listing.available_quantity} / ${listing.quantity} ${escapeHtml(listing.unit)} left</div>
+          </div>
+          <span class="badge ${badgeClass}">${badgeLabel}</span>
+        </div>
+        ${recommendation ? `<div class="reason-text">${escapeHtml(recommendation.reason)}</div>` : ``}
+      </div>
+    `;
+  }
+ 
+  async function handleRefresh() {
+    const btn = document.getElementById("refreshBtn");
+    btn.disabled = true;
+    btn.textContent = "Refreshing…";
+    try {
+      await fetch("/api/lifecycle/recommendations/refresh", {
+        method: "POST",
+        headers: { "Authorization": getToken() },
+      });
+      await loadRecommendations();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Refresh";
+    }
+  }
+ 
+  guardPage();
+</script>
+ 
+</body>
+</html>

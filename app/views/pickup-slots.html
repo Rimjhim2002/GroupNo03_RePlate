@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RePlate — Pickup Slots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F9FC;
+    --navy: #0B2545;
+    --blue: #1D4ED8;
+    --slate: #8DA9C4;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--navy); min-height: 100vh; }
+ 
+  .topbar {
+    background: var(--navy); color: var(--white); padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand-mark { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px; }
+  .brand-mark span { color: var(--slate); }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-user { font-size: 13px; color: var(--slate); }
+  .back-link, .logout-btn {
+    background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
+    padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: all 0.15s ease;
+  }
+  .back-link:hover, .logout-btn:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+ 
+  .page { max-width: 700px; margin: 0 auto; padding: 40px 32px 80px; }
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  .page-header p { color: #5A7189; font-size: 14px; margin-top: 6px; }
+ 
+  .form-card {
+    background: var(--white); border: 1px solid #E4E9F2; border-radius: 14px; padding: 24px; margin-bottom: 24px;
+  }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--navy); margin-bottom: 5px; }
+  .field input, .field select {
+    width: 100%; padding: 9px 11px; border: 1.5px solid #DDE5F0; border-radius: 7px; font-size: 13.5px;
+    font-family: inherit; color: var(--navy); background: var(--white); outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--blue); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+ 
+  .submit-btn {
+    width: 100%; padding: 11px 0; background: var(--blue); color: var(--white); border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; margin-top: 6px;
+  }
+  .submit-btn:hover { filter: brightness(1.08); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+ 
+  .error-msg {
+    display: none; background: #FDECEC; color: #B42318; border: 1px solid #F5C2C0;
+    padding: 9px 12px; border-radius: 7px; font-size: 12.5px; margin-bottom: 14px;
+  }
+  .error-msg.visible { display: block; }
+  .success-msg {
+    display: none; background: #E8F4EE; color: #14532D; border: 1px solid #B7DFC5;
+    padding: 9px 12px; border-radius: 7px; font-size: 12.5px; margin-bottom: 14px;
+  }
+  .success-msg.visible { display: block; }
+ 
+  .slot-list { display: flex; flex-direction: column; gap: 8px; }
+  .slot-row {
+    display: flex; justify-content: space-between; align-items: center; background: var(--white);
+    border: 1px solid #E4E9F2; border-radius: 10px; padding: 10px 14px; font-size: 13.5px;
+  }
+  .slot-capacity { font-size: 12.5px; color: var(--slate); font-weight: 600; }
+ 
+  .empty-state {
+    background: var(--white); border: 1.5px dashed #DDE5F0; border-radius: 14px;
+    padding: 32px 24px; text-align: center; color: var(--slate); font-size: 13.5px;
+  }
+</style>
+</head>
+<body>
+ 
+<div class="topbar">
+  <div class="brand-mark">RePlate<span>.</span></div>
+  <div class="topbar-right">
+    <span class="topbar-user" id="userLabel"></span>
+    <a class="back-link" href="/">Dashboard</a>
+    <button class="logout-btn" onclick="handleLogout()">Log out</button>
+  </div>
+</div>
+ 
+<div class="page">
+  <div class="page-header">
+    <h1>Pickup Time Slots</h1>
+    <p>Define pickup windows for a listing, so consumers and NGOs can choose one when they reserve.</p>
+  </div>
+ 
+  <div class="form-card">
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+ 
+    <div class="field">
+      <label>Listing</label>
+      <select id="listingSelect" onchange="onListingChange()">
+        <option value="">Loading your listings…</option>
+      </select>
+    </div>
+ 
+    <div class="field-row">
+      <div class="field">
+        <label>Start time</label>
+        <input type="datetime-local" id="slotStart" />
+      </div>
+      <div class="field">
+        <label>End time</label>
+        <input type="datetime-local" id="slotEnd" />
+      </div>
+    </div>
+ 
+    <div class="field">
+      <label>Capacity (how many people can pick up in this window)</label>
+      <input type="number" id="slotCapacity" min="1" placeholder="5" />
+    </div>
+ 
+    <button class="submit-btn" id="addSlotBtn" onclick="handleAddSlot()">Add pickup slot</button>
+  </div>
+ 
+  <div id="slotsContainer">
+    <div class="empty-state">Select a listing to see its pickup slots.</div>
+  </div>
+</div>
+ 
+<script>
+  function getToken() {
+    return localStorage.getItem("session_token");
+  }
+ 
+  async function guardPage() {
+    const token = getToken();
+    if (!token) { window.location.href = "/"; return; }
+    try {
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) { window.location.href = "/"; return; }
+      const user = await res.json();
+      if (user.role !== "restaurant") { window.location.href = "/"; return; }
+      document.getElementById("userLabel").textContent = user.business_name || user.name;
+      loadMyListings();
+    } catch (err) {
+      window.location.href = "/";
+    }
+  }
+ 
+  async function handleLogout() {
+    const token = getToken();
+    if (token) {
+      try { await fetch("/auth/logout", { method: "POST", headers: { "Authorization": token } }); } catch (err) {}
+    }
+    localStorage.removeItem("session_token");
+    window.location.href = "/";
+  }
+ 
+  function showError(msg) {
+    hideMessages();
+    const el = document.getElementById("errorMsg");
+    el.textContent = msg;
+    el.classList.add("visible");
+  }
+  function showSuccess(msg) {
+    hideMessages();
+    const el = document.getElementById("successMsg");
+    el.textContent = msg;
+    el.classList.add("visible");
+  }
+  function hideMessages() {
+    document.getElementById("errorMsg").classList.remove("visible");
+    document.getElementById("successMsg").classList.remove("visible");
+  }
+ 
+  async function loadMyListings() {
+    const select = document.getElementById("listingSelect");
+    try {
+      const res = await fetch("/listings/mine", { headers: { "Authorization": getToken() } });
+      const listings = await res.json();
+ 
+      if (!res.ok || listings.length === 0) {
+        select.innerHTML = '<option value="">No listings yet</option>';
+        return;
+      }
+ 
+      select.innerHTML = listings.map(l => `<option value="${l.id}">${l.food_name}</option>`).join("");
+      onListingChange();
+    } catch (err) {
+      select.innerHTML = '<option value="">Could not load listings</option>';
+    }
+  }
+ 
+  function onListingChange() {
+    const listingId = document.getElementById("listingSelect").value;
+    if (listingId) loadSlots(listingId);
+  }
+ 
+  // --- Pickup Time Slot Management ---
+  async function loadSlots(listingId) {
+    const container = document.getElementById("slotsContainer");
+    container.innerHTML = "Loading…";
+    try {
+      const res = await fetch(`/api/lifecycle/listings/${listingId}/pickup-slots`, {
+        headers: { "Authorization": getToken() },
+      });
+      const slots = await res.json();
+ 
+      if (!res.ok || slots.length === 0) {
+        container.innerHTML = '<div class="empty-state">No pickup slots added yet.</div>';
+        return;
+      }
+ 
+      container.innerHTML = `<div class="slot-list">${slots.map(slot => {
+        const start = new Date(slot.start_time).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        const end = new Date(slot.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        return `<div class="slot-row">
+          <span>${start} – ${end}</span>
+          <span class="slot-capacity">${slot.booked_count} / ${slot.capacity} booked</span>
+        </div>`;
+      }).join("")}</div>`;
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state">Could not load pickup slots.</div>';
+    }
+  }
+ 
+  async function handleAddSlot() {
+    hideMessages();
+    const listingId = document.getElementById("listingSelect").value;
+    if (!listingId) { showError("Select a listing first."); return; }
+ 
+    const startLocal = document.getElementById("slotStart").value;
+    const endLocal = document.getElementById("slotEnd").value;
+    const capacity = parseInt(document.getElementById("slotCapacity").value, 10);
+ 
+    if (!startLocal || !endLocal || !capacity) {
+      showError("Fill in start time, end time, and capacity.");
+      return;
+    }
+ 
+    const btn = document.getElementById("addSlotBtn");
+    btn.disabled = true;
+    btn.textContent = "Adding…";
+ 
+    const startTime = new Date(startLocal).toISOString();
+    const endTime = new Date(endLocal).toISOString();
+ 
+    try {
+      const res = await fetch(
+        `/api/lifecycle/listings/${listingId}/pickup-slots?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}&capacity=${capacity}`,
+        { method: "POST", headers: { "Authorization": getToken() } }
+      );
+      const data = await res.json().catch(() => ({}));
+ 
+      if (!res.ok) {
+        showError(data.detail || "Could not add this pickup slot.");
+        return;
+      }
+ 
+      showSuccess("Pickup slot added.");
+      document.getElementById("slotStart").value = "";
+      document.getElementById("slotEnd").value = "";
+      document.getElementById("slotCapacity").value = "";
+      loadSlots(listingId);
+    } catch (err) {
+      showError("Could not reach the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Add pickup slot";
+    }
+  }
+ 
+  guardPage();
+</script>
+ 
+</body>
+</html>
