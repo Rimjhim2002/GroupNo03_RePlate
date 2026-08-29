@@ -26,6 +26,7 @@
   .topbar-right { display: flex; align-items: center; gap: 16px; }
   .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .topbar-user { font-size: 13px; color: var(--slate); }
+  .account-link { text-decoration: none; }
   .back-link, .logout-btn, .refresh-btn, .nav-link {
     background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
     padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
@@ -79,11 +80,11 @@
   <div class="topbar-right">
     <div class="nav-links">
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/listings-view">Listings</a>
-      <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
-      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
+      <a class="nav-link" id="listingsLink" href="/listings-view">Listings</a>
+      <a class="nav-link" id="ngoDonationsLink" href="/ngo-donations-view">NGO Donations</a>
+      <a class="nav-link" id="pickupSlotsLink" href="/pickup-slots-view">Pickup Slots</a>
     </div>
-    <span class="topbar-user" id="userLabel">Welcome, User</span>
+    <a class="topbar-user account-link" id="userLabel" href="/" title="Open account dashboard">Welcome, User</a>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
@@ -120,8 +121,17 @@
       const res = await fetch("/auth/me", { headers: { "Authorization": token } });
       if (!res.ok) { window.location.href = "/"; return; }
       const user = await res.json();
+      if (user.role !== "restaurant") {
+        document.getElementById("listingsLink").remove();
+      }
+      if (user.role === "consumer") {
+        document.getElementById("ngoDonationsLink").remove();
+      }
       const displayName = user.business_name || user.organization_name || user.name || "User";
       document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
+      if (user.role !== "restaurant") {
+        document.getElementById("pickupSlotsLink").remove();
+      }
       loadRecommendations();
     } catch (err) {
       window.location.href = "/";

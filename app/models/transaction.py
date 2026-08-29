@@ -39,6 +39,8 @@ class Transaction(Document):
     )
     completed_at: Optional[datetime] = None
     cancelled_at: Optional[datetime] = None
+    ngo_pickup_confirmed_at: Optional[datetime] = None
+    restaurant_pickup_confirmed_at: Optional[datetime] = None
 
     class Settings:
         name = "transactions"

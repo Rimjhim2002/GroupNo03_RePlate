@@ -58,6 +58,7 @@
     font-size: 13px;
     color: var(--slate);
   }
+  .account-link { text-decoration: none; }
 
   .back-link, .logout-btn, .nav-link {
     background: transparent;
@@ -102,6 +103,20 @@
     font-size: 14px;
     margin-top: 6px;
   }
+
+  .expiry-alert {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid #F3B4B4;
+    border-radius: 9px;
+    background: #FFF1F1;
+    color: #991B1B;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .expiry-alert.visible { display: block; }
 
   .grid-layout {
     display: grid;
@@ -169,6 +184,9 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
+
+  .sale-pricing { display: grid; }
+  .sale-pricing.hidden { display: none; }
 
   .submit-btn {
     width: 100%;
@@ -263,20 +281,10 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 8px;
-  }
-
-  .listing-name {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 600;
     font-size: 16px;
     line-height: 1.3;
-  }
-
-  .listing-category {
-    font-size: 12px;
-    color: var(--slate);
-    text-transform: capitalize;
-    margin-top: 2px;
   }
 
   .badge {
@@ -356,6 +364,28 @@
   }
 
   .listing-actions button { background: #E6EEFB; border-color: #E6EEFB; }
+
+  .claims-section { margin-top: 32px; }
+  .claims-section h2 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; margin-bottom: 14px; }
+  .pickup-claim-card {
+    background: var(--white); border: 1px solid #E4E9F2; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px; font-size: 13px;
+  }
+  .claim-status { color: #14532D; font-size: 12px; font-weight: 700; margin-top: 8px; }
+  .confirm-pickup-btn {
+    margin-top: 10px; background: #15803D; color: var(--white); border: none;
+    padding: 8px 14px; border-radius: 7px; font-weight: 600; cursor: pointer;
+  }
+  .slot-manager { margin-top: 12px; border-top: 1px solid #E4E9F2; padding-top: 12px; }
+  .slot-toggle { background: #E6EEFB; border: 1px solid #DDE5F0; border-radius: 7px; padding: 8px 12px; color: var(--navy); font-weight: 600; cursor: pointer; }
+  .slot-panel { display: none; margin-top: 10px; }
+  .slot-panel.visible { display: block; }
+  .slot-list { display: grid; gap: 6px; margin-bottom: 10px; }
+  .slot-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; background: #F7F9FC; border-radius: 6px; font-size: 12px; }
+  .slot-form { display: grid; grid-template-columns: 1fr 1fr 90px auto; gap: 6px; align-items: end; }
+  .slot-form input { min-width: 0; padding: 7px; border: 1px solid #DDE5F0; border-radius: 6px; font: inherit; font-size: 12px; }
+  .slot-form button { padding: 7px 10px; border: 0; border-radius: 6px; background: var(--blue); color: var(--white); font-weight: 600; cursor: pointer; }
+  @media (max-width: 700px) { .slot-form { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -365,25 +395,25 @@
   <div class="topbar-right">
     <div class="nav-links">
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
-      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
-      <a class="nav-link" href="/recommendations-view">Recommendations</a>
+      <a class="nav-link" id="ngoDonationsLink" href="/ngo-donations-view">NGO Donations</a>
+      <a class="nav-link" id="recommendationsLink" href="/recommendations-view">Recommendations</a>
     </div>
-    <span class="topbar-user" id="userLabel"></span>
+    <a class="topbar-user account-link" id="userLabel" href="/" title="Open account dashboard"></a>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
 
 <div class="page">
   <div class="page-header">
-    <h1>Your Food Listings</h1>
+    <h1>My Food Offers</h1>
     <p>Create a listing and track its status here.</p>
+    <div class="expiry-alert" id="expiryAlert" role="alert"></div>
   </div>
 
   <div class="grid-layout">
     <!-- Create listing form -->
     <div class="form-card">
-      <h2>New listing</h2>
+      <h2>Add Food</h2>
 
       <div class="error-msg" id="errorMsg"></div>
       <div class="success-msg" id="successMsg"></div>
@@ -398,32 +428,20 @@
         <textarea id="description" placeholder="12 loaves, baked this morning"></textarea>
       </div>
 
-      <div class="field-row">
-        <div class="field">
-          <label>Category</label>
-          <input type="text" id="category" placeholder="bakery" />
-        </div>
-        <div class="field">
-          <label>Listing type</label>
-          <select id="listingType">
-            <option value="sale">Sale</option>
-            <option value="donation">Donation</option>
-          </select>
-        </div>
+      <div class="field">
+        <label>Listing type</label>
+        <select id="listingType">
+          <option value="sale">Sale</option>
+          <option value="donation">Donation</option>
+        </select>
       </div>
 
-      <div class="field-row">
-        <div class="field">
-          <label>Quantity</label>
-          <input type="number" id="quantity" min="1" placeholder="12" />
-        </div>
-        <div class="field">
-          <label>Unit</label>
-          <input type="text" id="unit" placeholder="loaf" />
-        </div>
+      <div class="field">
+        <label>Quantity</label>
+        <input type="number" id="quantity" min="1" placeholder="12" />
       </div>
 
-      <div class="field-row">
+      <div class="field-row sale-pricing" id="salePricingFields">
         <div class="field">
           <label>Original price</label>
           <input type="number" id="originalPrice" step="0.01" min="0" placeholder="5.00" />
@@ -458,6 +476,11 @@
       </div>
     </div>
   </div>
+
+  <section class="claims-section" id="donation-pickups">
+    <h2>Donation pickups</h2>
+    <div id="restaurantClaims"><div class="empty-state">Loading donation pickups…</div></div>
+  </section>
 </div>
 
 <script>
@@ -473,6 +496,38 @@
     return localStorage.getItem("session_token");
   }
 
+  async function loadRestaurantClaims() {
+    const container = document.getElementById("restaurantClaims");
+    try {
+      const res = await fetch("/api/lifecycle/restaurant/claims", { headers: { "Authorization": getToken() } });
+      if (!res.ok) { container.innerHTML = '<div class="empty-state">Could not load donation pickups.</div>'; return; }
+      const claims = await res.json();
+      if (!claims.length) { container.innerHTML = '<div class="empty-state">No donation pickups yet.</div>'; return; }
+      container.innerHTML = claims.map(claim => `
+        <div class="pickup-claim-card">
+          <div><strong>${escapeHtml(claim.food_name)}</strong> · ${claim.quantity} claimed by ${escapeHtml(claim.ngo_name)}</div>
+          <div class="listing-sub">Pickup: ${escapeHtml(claim.pickup_location)}</div>
+          <div class="claim-status">${claim.status === "completed" ? "Pickup completed" : claim.ngo_pickup_confirmed ? "NGO confirmed pickup; restaurant confirmation pending" : "Waiting for NGO pickup"}</div>
+          ${claim.status === "completed" || claim.restaurant_pickup_confirmed ? "" : `<button class="confirm-pickup-btn" onclick="confirmRestaurantPickup('${claim.id}')">Confirm restaurant handoff</button>`}
+        </div>
+      `).join("");
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state">Could not reach the server.</div>';
+    }
+  }
+
+  async function confirmRestaurantPickup(transactionId) {
+    try {
+      const res = await fetch(`/api/lifecycle/restaurant/claims/${transactionId}/confirm-pickup`, {
+        method: "POST", headers: { "Authorization": getToken() }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showError(data.detail || "Could not confirm the restaurant handoff."); return; }
+      showSuccess(data.status === "completed" ? "Both sides confirmed. Donation handoff completed." : "Restaurant handoff recorded. Waiting for NGO confirmation.");
+      loadRestaurantClaims();
+    } catch (err) { showError("Could not reach the server."); }
+  }
+
   async function guardPage() {
     const token = getToken();
     if (!token) {
@@ -486,9 +541,16 @@
         return;
       }
       const user = await res.json();
+      if (user.role === "consumer") {
+        document.getElementById("ngoDonationsLink").remove();
+      }
+      if (user.role !== "restaurant") {
+        document.getElementById("recommendationsLink").remove();
+      }
       const displayName = user.business_name || user.organization_name || user.name || "User";
       document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
       loadListings();
+      loadRestaurantClaims();
     } catch (err) {
       window.location.href = "/";
     }
@@ -524,6 +586,16 @@
     document.getElementById("successMsg").classList.remove("visible");
   }
 
+  function updatePricingFields() {
+    const isDonation = document.getElementById("listingType").value === "donation";
+    const pricingFields = document.getElementById("salePricingFields");
+    pricingFields.classList.toggle("hidden", isDonation);
+    if (isDonation) {
+      document.getElementById("originalPrice").value = "";
+      document.getElementById("discountPercentage").value = "";
+    }
+  }
+
   function renderListings(listings) {
     const grid = document.getElementById("listingsGrid");
     document.getElementById("listingsCount").textContent =
@@ -547,7 +619,6 @@
           <div class="listing-card-top">
             <div>
               <div class="listing-name">${escapeHtml(listing.food_name)}</div>
-              <div class="listing-category">${escapeHtml(listing.category)}</div>
             </div>
             <span class="badge ${badgeClass}">${statusLabel}</span>
           </div>
@@ -560,7 +631,7 @@
           </div>
           <div class="listing-meta">
             <span>Admin review: <strong>${listing.approval_status}</strong></span>
-            <span>Available: <strong>${listing.available_quantity} / ${listing.quantity} ${escapeHtml(listing.unit)}</strong></span>
+            <span>Available: <strong>${listing.available_quantity} / ${listing.quantity}</strong></span>
             <span>Pickup: <strong>${escapeHtml(listing.pickup_location)}</strong></span>
             <span>Expires: <strong>${expiryStr}</strong></span>
           </div>
@@ -574,9 +645,46 @@
               <button type="button" onclick="applySuggestedDiscount('${listing.id}')">Suggest discount</button>
             </div>
           ` : ""}
+          <div class="slot-manager">
+            <button class="slot-toggle" type="button" onclick="toggleListingSlots('${listing.id}')">Pickup slots</button>
+            <div class="slot-panel" id="slot-panel-${listing.id}">
+              <div class="slot-list" id="slot-list-${listing.id}">Loading pickup slots...</div>
+              <div class="slot-form">
+                <input type="datetime-local" id="slot-start-${listing.id}" aria-label="Pickup start time" />
+                <input type="datetime-local" id="slot-end-${listing.id}" aria-label="Pickup end time" />
+                <input type="number" min="1" id="slot-capacity-${listing.id}" placeholder="Capacity" aria-label="Pickup capacity" />
+                <button type="button" onclick="addListingSlot('${listing.id}')">Add slot</button>
+              </div>
+            </div>
+          </div>
         </div>
       `;
     }).join("");
+  }
+
+  function updateExpiryAlert(listings) {
+    const alert = document.getElementById("expiryAlert");
+    const now = Date.now();
+    const urgentListings = listings.filter(listing => {
+      const expiryValue = String(listing.expiry_date || "");
+      const hasTimezone = expiryValue.endsWith("Z") || /[+-]\d{2}:?\d{2}$/.test(expiryValue);
+      const expiryTime = Date.parse(hasTimezone ? expiryValue : `${expiryValue}Z`);
+      const hoursLeft = (expiryTime - now) / (1000 * 60 * 60);
+      const status = String(listing.status || "").toLowerCase();
+      return Number.isFinite(expiryTime) && status !== "expired" && hoursLeft > 0 && hoursLeft <= 1;
+    });
+
+    if (!urgentListings.length) {
+      alert.textContent = "";
+      alert.classList.remove("visible");
+      return;
+    }
+
+    const names = urgentListings.map(listing => listing.food_name).join(", ");
+    alert.textContent = urgentListings.length === 1
+      ? `Expiry alert: ${names} expires within 1 hour. Consider discounting, donating, or removing it.`
+      : `Expiry alert: ${urgentListings.length} food offers expire within 1 hour: ${names}.`;
+    alert.classList.add("visible");
   }
 
   function escapeHtml(str) {
@@ -585,14 +693,70 @@
     return div.innerHTML;
   }
 
+  async function toggleListingSlots(listingId) {
+    const panel = document.getElementById(`slot-panel-${listingId}`);
+    const isVisible = panel.classList.toggle("visible");
+    if (isVisible) await loadListingSlots(listingId);
+  }
+
+  async function loadListingSlots(listingId) {
+    const container = document.getElementById(`slot-list-${listingId}`);
+    try {
+      const response = await fetch(`/api/lifecycle/listings/${listingId}/pickup-slots`, {
+        headers: { "Authorization": getToken() },
+      });
+      const slots = await response.json();
+      if (!response.ok || !slots.length) {
+        container.innerHTML = "No pickup slots added yet.";
+        return;
+      }
+      container.innerHTML = slots.map(slot => {
+        const start = new Date(slot.start_time).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        const end = new Date(slot.end_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        return `<div class="slot-row"><span>${start} - ${end}</span><strong>${slot.booked_count} / ${slot.capacity} booked</strong></div>`;
+      }).join("");
+    } catch (error) {
+      container.textContent = "Could not load pickup slots.";
+    }
+  }
+
+  async function addListingSlot(listingId) {
+    const start = document.getElementById(`slot-start-${listingId}`).value;
+    const end = document.getElementById(`slot-end-${listingId}`).value;
+    const capacity = parseInt(document.getElementById(`slot-capacity-${listingId}`).value, 10);
+    if (!start || !end || !capacity) {
+      showError("Fill in pickup start time, end time, and capacity.");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/lifecycle/listings/${listingId}/pickup-slots?start_time=${encodeURIComponent(new Date(start).toISOString())}&end_time=${encodeURIComponent(new Date(end).toISOString())}&capacity=${capacity}`, {
+        method: "POST",
+        headers: { "Authorization": getToken() },
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showError(result.detail || "Could not add pickup slot.");
+        return;
+      }
+      showSuccess("Pickup slot added.");
+      document.getElementById(`slot-start-${listingId}`).value = "";
+      document.getElementById(`slot-end-${listingId}`).value = "";
+      document.getElementById(`slot-capacity-${listingId}`).value = "";
+      await loadListingSlots(listingId);
+    } catch (error) {
+      showError("Could not reach the server.");
+    }
+  }
+
   async function loadListings() {
     try {
       const res = await fetch("/listings/mine", { headers: { "Authorization": getToken() } });
       if (!res.ok) return;
       const listings = await res.json();
+      updateExpiryAlert(listings);
       renderListings(listings);
     } catch (err) {
-      // silently ignore — grid keeps its previous state
+      updateExpiryAlert([]);
     }
   }
 
@@ -632,16 +796,21 @@
     btn.textContent = "Creating...";
 
     const expiryLocal = document.getElementById("expiryDate").value;
+    const listingType = document.getElementById("listingType").value;
 
     const payload = {
       food_name: document.getElementById("foodName").value.trim(),
       description: document.getElementById("description").value.trim(),
-      category: document.getElementById("category").value.trim(),
-      listing_type: document.getElementById("listingType").value,
+      category: "food",
+      listing_type: listingType,
       quantity: parseInt(document.getElementById("quantity").value, 10),
-      unit: document.getElementById("unit").value.trim(),
-      original_price: parseFloat(document.getElementById("originalPrice").value),
-      discount_percentage: parseFloat(document.getElementById("discountPercentage").value || "0"),
+      unit: "item",
+      original_price: listingType === "donation"
+        ? 0
+        : parseFloat(document.getElementById("originalPrice").value),
+      discount_percentage: listingType === "donation"
+        ? 0
+        : parseFloat(document.getElementById("discountPercentage").value || "0"),
       expiry_date: expiryLocal ? new Date(expiryLocal).toISOString() : null,
       pickup_location: document.getElementById("pickupLocation").value.trim(),
     };
@@ -668,9 +837,7 @@
       showSuccess("Listing created.");
       document.getElementById("foodName").value = "";
       document.getElementById("description").value = "";
-      document.getElementById("category").value = "";
       document.getElementById("quantity").value = "";
-      document.getElementById("unit").value = "";
       document.getElementById("originalPrice").value = "";
       document.getElementById("discountPercentage").value = "";
       document.getElementById("expiryDate").value = "";
@@ -685,6 +852,9 @@
     }
   }
 
+  document.getElementById("listingType").addEventListener("change", updatePricingFields);
+  updatePricingFields();
+  setInterval(loadListings, 60000);
   guardPage();
 </script>
 

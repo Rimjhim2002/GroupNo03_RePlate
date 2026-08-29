@@ -26,6 +26,7 @@
   .topbar-right { display: flex; align-items: center; gap: 16px; }
   .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .topbar-user { font-size: 13px; color: var(--slate); }
+  .account-link { text-decoration: none; }
   .back-link, .logout-btn, .nav-link {
     background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
     padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
@@ -45,6 +46,12 @@
     padding: 10px 13px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;
   }
   .error-msg.visible { display: block; }
+
+  .success-msg {
+    display: none; background: #E8F4EE; color: #14532D; border: 1px solid #B7DFC4;
+    padding: 10px 13px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;
+  }
+  .success-msg.visible { display: block; }
  
   .listing-card {
     background: var(--white); border: 1px solid #E4E9F2; border-radius: 14px; padding: 20px;
@@ -75,6 +82,16 @@
     background: var(--white); border: 1.5px dashed #DDE5F0; border-radius: 14px;
     padding: 48px 24px; text-align: center; color: var(--slate); font-size: 14px;
   }
+
+  .claims-section { margin-top: 36px; }
+  .claims-section h2 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; margin-bottom: 14px; }
+  .claim-card {
+    background: var(--white); border: 1px solid #E4E9F2; border-radius: 14px; padding: 18px;
+    margin-bottom: 12px;
+  }
+  .claim-card-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .claim-status { color: #14532D; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .confirm-pickup-btn { margin-top: 12px; background: #15803D; color: var(--white); border: none; padding: 8px 14px; border-radius: 7px; font-weight: 600; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -84,11 +101,8 @@
   <div class="topbar-right">
     <div class="nav-links">
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/listings-view">Listings</a>
-      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
-      <a class="nav-link" href="/recommendations-view">Recommendations</a>
     </div>
-    <span class="topbar-user" id="userLabel">Welcome, User</span>
+    <a class="topbar-user account-link" id="userLabel" href="/" title="Open account dashboard">Welcome, User</a>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
@@ -100,13 +114,21 @@
   </div>
  
   <div class="error-msg" id="errorMsg"></div>
+  <div class="success-msg" id="successMsg" role="status"></div>
  
   <div id="donationsContainer">
     <div class="empty-state">Loading…</div>
   </div>
+
+  <section class="claims-section">
+    <h2>My claimed donations</h2>
+    <div id="claimsContainer"><div class="empty-state">Loading your claims…</div></div>
+  </section>
 </div>
  
 <script>
+  let currentRole = "";
+
   function getToken() {
     return localStorage.getItem("session_token");
   }
@@ -118,10 +140,12 @@
       const res = await fetch("/auth/me", { headers: { "Authorization": token } });
       if (!res.ok) { window.location.href = "/"; return; }
       const user = await res.json();
-      if (user.role !== "ngo") { window.location.href = "/"; return; }
-      const displayName = user.organization_name || user.name || "User";
+      if (user.role !== "ngo" && user.role !== "restaurant") { window.location.href = "/"; return; }
+      currentRole = user.role;
+      const displayName = user.organization_name || user.business_name || user.name || "User";
       document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
       loadDonations();
+      if (currentRole === "ngo") loadClaims();
     } catch (err) {
       window.location.href = "/";
     }
@@ -143,6 +167,7 @@
   }
  
   function showError(msg) {
+    document.getElementById("successMsg").classList.remove("visible");
     const el = document.getElementById("errorMsg");
     el.textContent = msg;
     el.classList.add("visible");
@@ -150,6 +175,13 @@
  
   function hideError() {
     document.getElementById("errorMsg").classList.remove("visible");
+  }
+
+  function showSuccess(msg) {
+    document.getElementById("errorMsg").classList.remove("visible");
+    const el = document.getElementById("successMsg");
+    el.textContent = msg;
+    el.classList.add("visible");
   }
  
   // --- NGO Food Claiming ---
@@ -170,8 +202,58 @@
       container.innerHTML = '<div class="empty-state">Could not reach the server.</div>';
     }
   }
+
+  async function loadClaims() {
+    const container = document.getElementById("claimsContainer");
+    try {
+      const res = await fetch("/api/lifecycle/ngo/claims", { headers: { "Authorization": getToken() } });
+      if (!res.ok) {
+        container.innerHTML = '<div class="empty-state">Could not load your claims.</div>';
+        return;
+      }
+      const claims = await res.json();
+      if (!claims.length) {
+        container.innerHTML = '<div class="empty-state">You have no claimed donations yet.</div>';
+        return;
+      }
+      container.innerHTML = claims.map(claim => `
+        <div class="claim-card">
+          <div class="claim-card-top">
+            <div>
+              <div class="listing-name">${escapeHtml(claim.food_name)}</div>
+              <div class="listing-sub">Pickup: ${escapeHtml(claim.pickup_location)} · Quantity: ${claim.quantity}</div>
+            </div>
+            <span class="claim-status">${claim.status === "completed" ? "Pickup confirmed" : claim.ngo_pickup_confirmed ? "Awaiting restaurant confirmation" : "Pickup pending"}</span>
+          </div>
+          ${claim.status === "completed" || claim.ngo_pickup_confirmed ? "" : `<button class="confirm-pickup-btn" onclick="confirmPickup('${claim.id}')">Confirm pickup</button>`}
+        </div>
+      `).join("");
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state">Could not reach the server.</div>';
+    }
+  }
+
+  async function confirmPickup(transactionId) {
+    hideError();
+    try {
+      const res = await fetch(`/api/lifecycle/ngo/claims/${transactionId}/complete`, {
+        method: "POST",
+        headers: { "Authorization": getToken() },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showError(data.detail || "Could not confirm pickup.");
+        return;
+      }
+      showSuccess("Pickup confirmed. The donation handoff is complete.");
+      loadClaims();
+    } catch (err) {
+      showError("Could not reach the server.");
+    }
+  }
  
   function renderCard(listing) {
+    const listingId = listing.id || listing._id;
     return `
       <div class="listing-card">
         <div class="listing-card-top">
@@ -182,10 +264,12 @@
           </div>
           <span class="badge">${listing.available_quantity} ${escapeHtml(listing.unit)} left</span>
         </div>
-        <div class="claim-row">
-          <input type="number" min="1" max="${listing.available_quantity}" value="1" id="qty-${listing.id}" />
-          <button class="claim-btn" id="claim-btn-${listing.id}" onclick="handleClaim('${listing.id}')">Claim for donation</button>
-        </div>
+        ${currentRole === "ngo" ? `
+          <div class="claim-row">
+            <input type="number" min="1" max="${listing.available_quantity}" value="1" id="qty-${listingId}" />
+            <button class="claim-btn" id="claim-btn-${listingId}" onclick="handleClaim('${listingId}')">Claim for donation</button>
+          </div>
+        ` : '<div class="listing-sub">Donation listing available for NGO pickup.</div>'}
       </div>
     `;
   }
@@ -213,7 +297,9 @@
         return;
       }
  
+      showSuccess("Donation claimed successfully. Your claim is awaiting pickup confirmation.");
       loadDonations(); // refresh so claimed/emptied listings drop off the list
+      loadClaims();
     } catch (err) {
       showError("Could not reach the server.");
       btn.disabled = false;

@@ -97,3 +97,16 @@ async def transaction_history(
     current_user: User = Depends(require_role(UserRole.CONSUMER)),
 ):
     return await consumer_service.get_transaction_history(current_user)
+
+
+@router.post("/orders/{transaction_id}/complete")
+@router.post("/transactions/{transaction_id}/complete")
+async def complete_order(
+    transaction_id: str,
+    current_user: User = Depends(require_role(UserRole.CONSUMER)),
+):
+    try:
+        transaction = await consumer_service.mark_order_completed(transaction_id, current_user)
+        return {"transaction_id": str(transaction.id), "status": transaction.status}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

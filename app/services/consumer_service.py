@@ -6,7 +6,7 @@ from typing import Any
 from app.controllers.food_listing_controller import claim_listing
 from app.models.enums import ListingStatus
 from app.models.food_listing import FoodListing
-from app.models.transaction import Transaction
+from app.models.transaction import Transaction, TransactionStatus, TransactionType
 from app.models.user import User
 from app.services.availability_service import join_waitlist as join_waitlist_entry
 
@@ -99,7 +99,11 @@ async def get_nearby_food(
     lookup_lon = longitude if longitude is not None else consumer.longitude
 
     listings = await FoodListing.find(
-        FoodListing.status == ListingStatus.AVAILABLE,
+        {
+            "status": {
+                "$in": [ListingStatus.AVAILABLE.value, ListingStatus.RESERVED.value]
+            }
+        }
     ).to_list()
 
     nearby: list[dict[str, Any]] = []
@@ -124,7 +128,10 @@ async def get_nearby_food(
         nearby.append(summary)
 
     nearby.sort(
-        key=lambda item: item["distance_km"] if item["distance_km"] is not None else float("inf")
+        key=lambda item: (
+            item["available_quantity"] <= 0,
+            item["distance_km"] if item["distance_km"] is not None else float("inf"),
+        )
     )
     return nearby
 
@@ -146,7 +153,11 @@ async def search_food_listings(
     lookup_lon = longitude if longitude is not None else consumer.longitude
 
     listings = await FoodListing.find(
-        FoodListing.status == ListingStatus.AVAILABLE,
+        {
+            "status": {
+                "$in": [ListingStatus.AVAILABLE.value, ListingStatus.RESERVED.value]
+            }
+        }
     ).to_list()
 
     results: list[dict[str, Any]] = []
@@ -197,6 +208,7 @@ async def search_food_listings(
 
     results.sort(
         key=lambda item: (
+            item["available_quantity"] <= 0,
             item["distance_km"] is None,
             item["distance_km"] if item["distance_km"] is not None else float("inf"),
         )
@@ -206,6 +218,25 @@ async def search_food_listings(
 
 async def reserve_food_listing(consumer: User, listing_id: str, quantity: int) -> dict[str, Any]:
     return await claim_listing(listing_id, quantity, consumer)
+
+
+async def mark_order_completed(transaction_id: str, consumer: User) -> Transaction:
+    transaction = await Transaction.get(transaction_id)
+    if transaction is None:
+        raise ValueError("Transaction not found")
+    if transaction.claimed_by.ref.id != consumer.id:
+        raise ValueError("You can only complete your own orders")
+    if transaction.type != TransactionType.SALE:
+        raise ValueError("This transaction is not a consumer order")
+    if transaction.status == TransactionStatus.COMPLETED:
+        return transaction
+    if transaction.status == TransactionStatus.CANCELLED:
+        raise ValueError("Cancelled orders cannot be completed")
+
+    transaction.status = TransactionStatus.COMPLETED
+    transaction.completed_at = datetime.now(timezone.utc)
+    await transaction.save()
+    return transaction
 
 
 async def join_waitlist(consumer: User, food_listing_id: str):

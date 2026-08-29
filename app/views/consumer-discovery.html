@@ -86,6 +86,7 @@
     .buttons { display: flex; gap: 8px; margin-top: 6px; }
     .reserve-btn { background: var(--blue); color: #fff; flex: 1; }
     .waitlist-btn { background: #eef4ff; color: var(--blue); }
+    .complete-btn { background: var(--green); color: #fff; flex: 1; }
     .status-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .message {
       display: none; margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600;
@@ -93,6 +94,8 @@
     .message.error { background: #fdecec; color: var(--red); border: 1px solid #f6c0c0; }
     .message.success { background: #eaf7ef; color: var(--green); border: 1px solid #bfe8c6; }
     .message.visible { display: block; }
+    .history-section { display: none; margin-top: 32px; }
+    .history-section.visible { display: block; }
     input[type="number"] { -moz-appearance: textfield; }
     input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
@@ -102,6 +105,7 @@
     <div class="brand">RePlate<span>.</span></div>
     <div class="header-actions">
       <a class="button-link" href="/marketplace">Marketplace</a>
+      <button class="button-link" id="historyToggle" onclick="toggleHistory()" aria-expanded="false">My transaction history</button>
       <button class="button-link" onclick="logout()">Log out</button>
     </div>
   </header>
@@ -149,7 +153,7 @@
       <div id="results" class="results"></div>
     </section>
 
-    <section style="margin-top: 32px;">
+    <section id="historySection" class="history-section">
       <div class="header-row" style="margin-top: 0; margin-bottom: 12px;">
         <h2 style="margin:0;">My transaction history</h2>
       </div>
@@ -208,6 +212,17 @@
       el.classList.remove('success', 'error', 'visible');
     }
 
+    function toggleHistory() {
+      const section = document.getElementById('historySection');
+      const button = document.getElementById('historyToggle');
+      const isVisible = section.classList.toggle('visible');
+      button.setAttribute('aria-expanded', String(isVisible));
+      button.textContent = isVisible ? 'Hide transaction history' : 'My transaction history';
+      if (isVisible) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
     function renderListings(listings, category = '') {
       const resultsEl = document.getElementById('results');
       if (!listings.length) {
@@ -223,7 +238,7 @@
         const distance = listing.distance_km !== null && listing.distance_km !== undefined ? `${listing.distance_km} km away` : 'Location unavailable';
         const price = listing.discounted_price ?? listing.original_price;
         const oldPrice = listing.discount_percentage > 0 ? `<span class="small" style="text-decoration: line-through;">$${listing.original_price}</span>` : '';
-        const qty = `${listing.available_quantity} ${listing.unit} left`;
+        const qty = `${listing.available_quantity} left`;
         return `
           <article class="card">
             <div class="listing-top">
@@ -234,7 +249,7 @@
               <span class="pill ${listing.available_quantity > 0 ? 'alt' : ''}">${status}</span>
             </div>
             <div class="meta">${listing.description}</div>
-            <div class="meta">Category: ${listing.category} · ${distance} · Expires in ${listing.expiry_hours_left}h</div>
+            <div class="meta">${distance} · Expires in ${listing.expiry_hours_left}h</div>
             <div class="meta">Pickup: ${listing.pickup_location}</div>
             <div class="status-bar">
               <div>
@@ -244,8 +259,9 @@
               <div class="small">${qty}</div>
             </div>
             <div class="buttons">
-              <button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve</button>
-              <button class="waitlist-btn" onclick="joinWaitlist('${listing.id}')">Waitlist</button>
+              ${listing.available_quantity > 0
+                ? `<button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve</button>`
+                : `<button class="waitlist-btn" onclick="joinWaitlist('${listing.id}')">Join waitlist</button>`}
             </div>
           </article>
         `;
@@ -270,6 +286,9 @@
           </div>
           <div class="meta">Type: ${item.type} · Quantity: ${item.quantity} · Total: $${item.total_amount || 0}</div>
           <div class="meta">Reserved: ${new Date(item.reserved_at).toLocaleString()}</div>
+          ${item.type === 'sale' && item.status !== 'completed' && item.status !== 'cancelled'
+            ? `<div class="buttons"><button class="complete-btn" onclick="completeOrder('${item.transaction_id}')">Mark order complete</button></div>`
+            : ''}
         </article>
       `).join('');
     }
@@ -330,6 +349,16 @@
       try {
         const response = await fetchJson(`/api/consumer/waitlist/${listingId}`, { method: 'POST' });
         showMessage(`Joined waitlist for position ${response.position}`, 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function completeOrder(transactionId) {
+      try {
+        await fetchJson(`/api/consumer/orders/${transactionId}/complete`, { method: 'POST' });
+        showMessage('Order marked as complete.', 'success');
+        await loadHistory();
       } catch (error) {
         showMessage(error.message, 'error');
       }

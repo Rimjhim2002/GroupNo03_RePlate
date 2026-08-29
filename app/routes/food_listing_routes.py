@@ -19,6 +19,11 @@ async def get_available_listings():
     return await food_listing_controller.list_available_listings()
 
 
+@router.get("/marketplace", response_model=list[FoodListingRead])
+async def get_marketplace_listings():
+    return await food_listing_controller.list_marketplace_listings()
+
+
 @router.post("/{listing_id}/claim")
 async def claim_listing(
     listing_id: str,

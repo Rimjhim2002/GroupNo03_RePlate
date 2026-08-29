@@ -4,746 +4,210 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RePlate - Marketplace</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
   <style>
-    :root {
-      --bg: #F7F9FC;
-      --navy: #0B2545;
-      --blue: #1D4ED8;
-      --slate: #8DA9C4;
-      --white: #FFFFFF;
-      --border: #DDE5F0;
-      --green: #14532D;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--navy);
-      font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-    }
-
-    .topbar {
-      background: var(--navy);
-      color: var(--white);
-      padding: 18px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .brand {
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .brand span {
-      color: var(--slate);
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .header-links {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .user {
-      color: var(--slate);
-      font-size: 13px;
-    }
-
-    .nav-btn {
-      background: transparent;
-      color: white;
-      border: 1px solid rgba(255,255,255,.3);
-      border-radius: 7px;
-      padding: 7px 14px;
-      cursor: pointer;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 13px;
-      line-height: 1.2;
-    }
-
-    .nav-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .page {
-      max-width: 1000px;
-      margin: auto;
-      padding: 40px 32px 80px;
-    }
-
-    .page-header {
-      margin-bottom: 28px;
-    }
-
-    h1 {
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 28px;
-      margin: 0 0 6px;
-    }
-
-    .subtitle {
-      color: #5A7189;
-      margin: 0;
-    }
-
-    .message {
-      display: none;
-      margin-bottom: 18px;
-      padding: 12px 14px;
-      border-radius: 8px;
-      background: #E8F4EE;
-      color: var(--green);
-      font-weight: 600;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 18px;
-    }
-
-    .card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .food-name {
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0;
-    }
-
-    .description {
-      color: #5A7189;
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .location {
-      color: #5A7189;
-      font-size: 13px;
-    }
-
-    .badge {
-      display: inline-block;
-      white-space: nowrap;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 5px 9px;
-      border-radius: 20px;
-      background: #E8F4EE;
-      color: var(--green);
-      height: fit-content;
-    }
-
-    .stock-badge {
-      background: #E6EEFB;
-      color: var(--blue);
-    }
-
-    .price-row {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .old-price {
-      color: var(--slate);
-      text-decoration: line-through;
-      font-size: 13px;
-    }
-
-    .price {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--blue);
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      margin-top: 5px;
-    }
-
-    input {
-      width: 65px;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font: inherit;
-    }
-
-    .reserve-btn {
-      flex: 1;
-      padding: 10px 12px;
-      border: 0;
-      border-radius: 7px;
-      background: var(--blue);
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      font: inherit;
-    }
-
-    .reserve-btn:hover {
-      opacity: .9;
-    }
-
-    .pickup-btn {
-      width: 100%;
-      margin-top: 4px;
-      padding: 8px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: white;
-      color: var(--blue);
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .pickup {
-      display: none;
-      padding: 10px;
-      margin-top: 2px;
-      background: #F7F9FC;
-      border-radius: 7px;
-      color: #5A7189;
-      font-size: 12.5px;
-      line-height: 1.7;
-    }
-
-    .pickup.visible {
-      display: block;
-    }
-
-    @media (max-width: 600px) {
-      .topbar {
-        padding: 16px 20px;
-      }
-
-      .user {
-        display: none;
-      }
-
-      .page {
-        padding: 30px 18px 60px;
-      }
-    }
+    :root { --bg: #f7f9fc; --navy: #0b2545; --slate: #8da9c4; --white: #ffffff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--navy); font-family: Inter, Arial, sans-serif; }
+    .topbar { background: var(--navy); color: var(--white); padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { font-size: 20px; font-weight: 700; }
+    .brand span { color: var(--slate); }
+    .account-link { color: var(--white); text-decoration: none; }
+    .topbar-right, .header-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .nav-btn { background: transparent; border: 1px solid rgba(255,255,255,.3); color: var(--white); padding: 8px 14px; border-radius: 7px; text-decoration: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 42px 24px 80px; }
+    .page-header { margin-bottom: 24px; }
+    h1 { margin: 0; font-size: 30px; }
+    .subtitle { margin-top: 7px; color: #5a7189; }
+    .message { display: none; margin-bottom: 18px; padding: 12px 14px; border-radius: 9px; font-size: 14px; font-weight: 600; }
+    .message.visible { display: block; }
+    .message.success { background: #e8f4ee; color: #14532d; border: 1px solid #b7dfc4; }
+    .message.error { background: #fdecec; color: #b42318; border: 1px solid #f5c2c0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+    .card { background: var(--white); border: 1px solid #e4e9f2; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .card-top, .status-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .food-name { margin: 0; font-size: 19px; }
+    .description, .meta { color: #5a7189; font-size: 13px; line-height: 1.5; }
+    .badge { background: #e8f4ee; color: #14532d; border-radius: 999px; padding: 5px 9px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge.expired { background: #fdecec; color: #b42318; }
+    .price { color: #1d4ed8; font-size: 22px; font-weight: 800; }
+    .old-price { color: #7a90a6; text-decoration: line-through; font-size: 12px; }
+    .actions { display: flex; gap: 8px; }
+    .actions input { width: 68px; border: 1px solid #d8e1ed; border-radius: 7px; padding: 9px; }
+    .reserve-btn { flex: 1; border: 0; border-radius: 7px; padding: 9px 12px; background: #1d4ed8; color: var(--white); font-weight: 700; cursor: pointer; }
+    .reserve-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .empty-state { background: var(--white); border: 1px dashed #d8e1ed; border-radius: 14px; padding: 56px 24px; text-align: center; color: #5a7189; }
   </style>
 </head>
-
 <body>
-
-  <!-- TOP BAR -->
   <header class="topbar">
     <div class="brand">RePlate<span>.</span></div>
-
     <div class="topbar-right">
-      <div class="header-links">
-        <a class="nav-btn" href="/listings-view">Listings</a>
-        <a class="nav-btn" href="/ngo-donations-view">NGO Donations</a>
-        <a class="nav-btn" href="/pickup-slots-view">Pickup Slots</a>
-        <a class="nav-btn" href="/recommendations-view">Recommendations</a>
-      </div>
-
-      <span class="user" id="userNameLabel">Loading...</span>
-
-      <button class="nav-btn" onclick="logout()">
-        Log out
-      </button>
+      <nav class="header-links">
+        <a class="nav-btn" id="listingsLink" href="/listings-view">Listings</a>
+        <a class="nav-btn" id="ngoDonationsLink" href="/ngo-donations-view">NGO Donations</a>
+        <a class="nav-btn" id="recommendationsLink" href="/recommendations-view">Recommendations</a>
+      </nav>
+      <a id="userNameLabel" class="account-link" href="/" title="Open account dashboard">Loading...</a>
+      <button class="nav-btn" onclick="logout()">Log out</button>
     </div>
   </header>
 
-
-  <!-- MAIN MARKETPLACE -->
   <main class="page">
-
     <section class="page-header">
       <h1>Available surplus food</h1>
-
-      <p class="subtitle">
-        Choose a listing and reserve what you need.
-      </p>
+      <p class="subtitle">Choose a listing and reserve what you need.</p>
     </section>
-
-
-    <!-- SUCCESS MESSAGE -->
     <div id="message" class="message"></div>
-
-
-    <!-- FOOD LISTINGS -->
-    <section class="grid">
-
-
-      <!-- FOOD 1 -->
-      <article class="card">
-
-        <div class="card-top">
-          <div>
-            <h2 class="food-name">
-              Chicken Biryani
-            </h2>
-
-            <p class="description">
-              Freshly prepared chicken biryani available for pickup.
-            </p>
-          </div>
-
-          <span class="badge">
-            2.5h left
-          </span>
-        </div>
-
-
-        <div class="location">
-          5 portions · Dhanmondi
-        </div>
-
-
-        <div class="price-row">
-          <span class="old-price">
-            $4.00
-          </span>
-
-          <span class="price">
-            $2.50
-          </span>
-        </div>
-
-
-        <span class="badge stock-badge">
-          5 portions left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-1"
-            type="number"
-            min="1"
-            max="5"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Chicken Biryani', 1)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-1')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-1" class="pickup">
-          Today: 4:00 PM – 5:00 PM<br>
-          Today: 5:30 PM – 6:30 PM
-        </div>
-
-      </article>
-
-
-
-      <!-- FOOD 2 -->
-      <article class="card">
-
-        <div class="card-top">
-
-          <div>
-
-            <h2 class="food-name">
-              Vegetable Sandwiches
-            </h2>
-
-            <p class="description">
-              Fresh vegetable sandwiches prepared earlier today.
-            </p>
-
-          </div>
-
-          <span class="badge">
-            5.2h left
-          </span>
-
-        </div>
-
-
-        <div class="location">
-          8 pieces · Gulshan
-        </div>
-
-
-        <div class="price-row">
-
-          <span class="old-price">
-            $2.50
-          </span>
-
-          <span class="price">
-            $1.50
-          </span>
-
-        </div>
-
-
-        <span class="badge stock-badge">
-          8 pieces left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-2"
-            type="number"
-            min="1"
-            max="8"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Vegetable Sandwiches', 2)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-2')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-2" class="pickup">
-          Today: 3:30 PM – 4:30 PM<br>
-          Today: 6:00 PM – 7:00 PM
-        </div>
-
-      </article>
-
-
-
-      <!-- FOOD 3 -->
-      <article class="card">
-
-        <div class="card-top">
-
-          <div>
-
-            <h2 class="food-name">
-              Creamy Pasta
-            </h2>
-
-            <p class="description">
-              Creamy pasta with vegetables, packed and ready for pickup.
-            </p>
-
-          </div>
-
-          <span class="badge">
-            7.8h left
-          </span>
-
-        </div>
-
-
-        <div class="location">
-          3 portions · Banani
-        </div>
-
-
-        <div class="price-row">
-
-          <span class="old-price">
-            $3.25
-          </span>
-
-          <span class="price">
-            $2.00
-          </span>
-
-        </div>
-
-
-        <span class="badge stock-badge">
-          3 portions left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-3"
-            type="number"
-            min="1"
-            max="3"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Creamy Pasta', 3)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-3')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-3" class="pickup">
-          Today: 5:00 PM – 6:00 PM<br>
-          Today: 7:00 PM – 8:00 PM
-        </div>
-
-      </article>
-
-
-
-      <!-- FOOD 4 -->
-      <article class="card">
-
-        <div class="card-top">
-
-          <div>
-
-            <h2 class="food-name">
-              Chocolate Cake
-            </h2>
-
-            <p class="description">
-              Slices of chocolate cake from today's bakery surplus.
-            </p>
-
-          </div>
-
-          <span class="badge">
-            10.5h left
-          </span>
-
-        </div>
-
-
-        <div class="location">
-          6 slices · Uttara
-        </div>
-
-
-        <div class="price-row">
-
-          <span class="old-price">
-            $2.00
-          </span>
-
-          <span class="price">
-            $1.00
-          </span>
-
-        </div>
-
-
-        <span class="badge stock-badge">
-          6 slices left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-4"
-            type="number"
-            min="1"
-            max="6"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Chocolate Cake', 4)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-4')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-4" class="pickup">
-          Today: 2:00 PM – 3:00 PM<br>
-          Today: 4:30 PM – 5:30 PM
-        </div>
-
-      </article>
-
-
+    <section id="listings" class="grid">
+      <div class="empty-state">Loading food listings...</div>
     </section>
-
   </main>
 
-
-
-  <!-- JAVASCRIPT -->
   <script>
-
-    function reserveFood(foodName, id) {
-
-      const quantity =
-        Number(document.getElementById("qty-" + id).value);
-
-      const message =
-        document.getElementById("message");
-
-
-      if (!quantity || quantity < 1) {
-
-        message.style.display = "block";
-
-        message.textContent =
-          "Please select a valid quantity.";
-
-        return;
-      }
-
-
-      message.style.display = "block";
-
-      message.textContent =
-        quantity +
-        " × " +
-        foodName +
-        " reserved successfully!";
-
-    }
-
-
-
-    function togglePickup(id) {
-
-      const panel =
-        document.getElementById(id);
-
-      panel.classList.toggle("visible");
-
-    }
-
-
-
     function getToken() {
       return localStorage.getItem("session_token");
+    }
+
+    function escapeHtml(value) {
+      const element = document.createElement("div");
+      element.textContent = value ?? "";
+      return element.innerHTML;
+    }
+
+    function showMessage(text, type) {
+      const message = document.getElementById("message");
+      message.textContent = text;
+      message.className = `message visible ${type}`;
+    }
+
+    function parseExpiryDate(expiryDate) {
+      const value = String(expiryDate || "");
+      const hasTimezone = value.endsWith("Z") || /[+-]\d{2}:?\d{2}$/.test(value);
+      return Date.parse(hasTimezone ? value : `${value}Z`);
+    }
+
+    function formatRemainingTime(expiryDate) {
+      const remainingMinutes = Math.max(0, Math.ceil((parseExpiryDate(expiryDate) - Date.now()) / 60000));
+      if (remainingMinutes < 1) return "less than 1m left";
+      if (remainingMinutes < 60) return `${remainingMinutes}m left`;
+      const hours = Math.floor(remainingMinutes / 60);
+      const minutes = remainingMinutes % 60;
+      return minutes ? `${hours}h ${minutes}m left` : `${hours}h left`;
+    }
+
+    function renderListings(listings) {
+      const container = document.getElementById("listings");
+      const activeListings = listings.filter(listing => {
+        return listing.available_quantity > 0;
+      });
+      if (!activeListings.length) {
+        container.innerHTML = '<div class="empty-state">No approved food listings are available yet.</div>';
+        return;
+      }
+      container.innerHTML = activeListings.map(listing => {
+        const price = listing.discounted_price ?? listing.original_price;
+        const oldPrice = listing.discount_percentage > 0
+          ? `<span class="old-price">$${listing.original_price.toFixed(2)}</span>`
+          : "";
+        const timeLeft = formatRemainingTime(listing.expiry_date);
+        return `
+          <article class="card">
+            <div class="card-top">
+              <div>
+                <h2 class="food-name">${escapeHtml(listing.food_name)}</h2>
+                <p class="description">${escapeHtml(listing.description)}</p>
+              </div>
+              <span class="badge">${timeLeft}</span>
+            </div>
+            <div class="meta">${listing.available_quantity} available · Pickup: ${escapeHtml(listing.pickup_location)}</div>
+            <div class="status-row"><div>${oldPrice}<div class="price">$${price.toFixed(2)}</div></div></div>
+            <div class="actions">
+              <input id="qty-${listing.id}" type="number" min="1" max="${listing.available_quantity}" value="1" />
+              <button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve food</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadListings() {
+      try {
+        const response = await fetch("/listings/available");
+        const listings = await response.json();
+        if (!response.ok) throw new Error(listings.detail || "Could not load food listings.");
+        renderListings(listings);
+      } catch (error) {
+        document.getElementById("listings").innerHTML = '<div class="empty-state">Could not load food listings.</div>';
+        showMessage(error.message, "error");
+      }
+    }
+
+    async function reserveListing(listingId) {
+      const quantityInput = document.getElementById(`qty-${listingId}`);
+      const quantity = parseInt(quantityInput.value, 10);
+      if (!getToken()) {
+        showMessage("Please log in as a consumer to reserve food.", "error");
+        return;
+      }
+      if (!quantity || quantity < 1) {
+        showMessage("Enter a valid quantity.", "error");
+        return;
+      }
+      try {
+        const response = await fetch(`/api/consumer/reserve/${listingId}?quantity=${quantity}`, {
+          method: "POST",
+          headers: { "Authorization": getToken() },
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || "Could not reserve this food.");
+        showMessage(result.message || "Food reserved successfully.", "success");
+        await loadListings();
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
     }
 
     async function loadUserName() {
       const token = getToken();
       const label = document.getElementById("userNameLabel");
-
       if (!token) {
         label.textContent = "Guest";
         return;
       }
-
       try {
-        const res = await fetch("/auth/me", {
-          headers: { "Authorization": token }
-        });
-
-        if (!res.ok) {
+        const response = await fetch("/auth/me", { headers: { "Authorization": token } });
+        if (!response.ok) {
           label.textContent = "Guest";
           return;
         }
-
-        const user = await res.json();
-        const displayName = user.business_name || user.organization_name || user.name || "User";
-        label.textContent = `Welcome, ${displayName}`;
-      } catch (err) {
-        label.textContent = "Welcome, User";
+        const user = await response.json();
+        if (user.role !== "restaurant") {
+          document.getElementById("recommendationsLink").remove();
+        }
+        if (user.role !== "restaurant") {
+          document.getElementById("listingsLink").remove();
+        }
+        if (user.role === "consumer") {
+          document.getElementById("ngoDonationsLink").remove();
+        }
+        label.textContent = `Welcome, ${user.business_name || user.organization_name || user.name || "User"}`;
+      } catch (error) {
+        label.textContent = "Guest";
       }
     }
 
     async function logout() {
       const token = getToken();
       if (token) {
-        try {
-          await fetch("/auth/logout", {
-            method: "POST",
-            headers: { "Authorization": token }
-          });
-        } catch (err) {}
+        try { await fetch("/auth/logout", { method: "POST", headers: { "Authorization": token } }); } catch (error) {}
       }
       localStorage.removeItem("session_token");
       window.location.href = "/";
     }
 
     loadUserName();
-
+    loadListings();
+    setInterval(loadListings, 30000);
   </script>
-
 </body>
 </html>
