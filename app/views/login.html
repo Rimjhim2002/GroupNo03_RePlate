@@ -515,6 +515,13 @@ function showDashboard(user) {
         oldMarketplaceLink.remove();
     }
 
+    const oldConsumerDiscoveryLink =
+        document.getElementById("consumerDiscoveryLink");
+
+    if (oldConsumerDiscoveryLink) {
+        oldConsumerDiscoveryLink.remove();
+    }
+
     const oldManageLink =
         document.getElementById("manageListingsLink");
 
@@ -566,6 +573,23 @@ function showDashboard(user) {
 
             dashCard.appendChild(marketplaceLink);
         }
+    }
+
+    if (user.role === "consumer") {
+        const consumerDiscoveryLink = document.createElement("a");
+
+        consumerDiscoveryLink.id = "consumerDiscoveryLink";
+        consumerDiscoveryLink.href = "/consumer-discovery-view";
+        consumerDiscoveryLink.textContent = "Nearby Food & History →";
+
+        consumerDiscoveryLink.style.marginTop = "16px";
+        consumerDiscoveryLink.style.marginLeft = "12px";
+        consumerDiscoveryLink.style.display = "inline-block";
+        consumerDiscoveryLink.style.color = "#1D4ED8";
+        consumerDiscoveryLink.style.fontWeight = "600";
+        consumerDiscoveryLink.style.textDecoration = "none";
+
+        dashCard.appendChild(consumerDiscoveryLink);
     }
 }
 

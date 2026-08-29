@@ -6,7 +6,7 @@ from app.routes import auth_routes
 from app.routes import auth_routes, dashboard_routes
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from app.routes import auth_routes, dashboard_routes, food_listing_routes
+from app.routes import auth_routes, dashboard_routes, food_listing_routes, consumer_routes
 from app.routes import lifecycle_routes  # <-- NEW: your router
 from app.services.expiry_monitor import monitor_expiry
 @asynccontextmanager
@@ -29,9 +29,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth_routes.router)
- 
+  
 app.include_router(dashboard_routes.router)
 app.include_router(food_listing_routes.router)
+app.include_router(consumer_routes.router)
 app.include_router(lifecycle_routes.router)  # <-- NEW: registers your 5 features' endpoints
  
 @app.get("/")
@@ -58,3 +59,7 @@ async def serve_ngo_donations_page():
 @app.get("/pickup-slots-view")
 async def serve_pickup_slots_page():
     return FileResponse("app/views/pickup-slots.html")
+
+@app.get("/consumer-discovery-view")
+async def serve_consumer_discovery_page():
+    return FileResponse("app/views/consumer-discovery.html")

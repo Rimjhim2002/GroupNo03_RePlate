@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RePlate Consumer Discovery</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --navy: #0b2545;
+      --blue: #1d4ed8;
+      --green: #15803d;
+      --red: #b91c1c;
+      --card: #ffffff;
+      --muted: #5d728d;
+      --line: #dfe7f2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--navy);
+      font-family: Inter, Arial, sans-serif;
+    }
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand { font-size: 22px; font-weight: 700; }
+    .brand span { color: #a9bcd0; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .button-link {
+      background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff;
+      border-radius: 8px; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 600;
+    }
+    .page { max-width: 1100px; margin: 0 auto; padding: 36px 20px 80px; }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 20px rgba(11, 37, 69, 0.04);
+    }
+    .header-row {
+      display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 30px; }
+    .subtitle { color: var(--muted); margin-top: 6px; }
+    .filters {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 12px; font-weight: 700; color: var(--navy); }
+    .field input, .field select {
+      width: 100%; border-radius: 8px; border: 1px solid var(--line); padding: 10px 12px; font-size: 14px;
+    }
+    .primary-btn, .secondary-btn, .reserve-btn, .waitlist-btn {
+      border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: 700; font-size: 13px;
+    }
+    .primary-btn { background: var(--blue); color: #fff; }
+    .secondary-btn { background: #eef4ff; color: var(--blue); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .results, .history {
+      margin-top: 24px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .listing-top { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .listing-name { font-size: 20px; font-weight: 700; margin: 0; }
+    .pill {
+      border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+      padding: 5px 9px; font-size: 11px; font-weight: 700; background: #eaf7ef; color: var(--green);
+    }
+    .pill.alt { background: #e9eefb; color: var(--blue); }
+    .meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .price { font-size: 24px; font-weight: 800; color: var(--blue); }
+    .small { font-size: 12px; color: var(--muted); }
+    .buttons { display: flex; gap: 8px; margin-top: 6px; }
+    .reserve-btn { background: var(--blue); color: #fff; flex: 1; }
+    .waitlist-btn { background: #eef4ff; color: var(--blue); }
+    .status-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .message {
+      display: none; margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    }
+    .message.error { background: #fdecec; color: var(--red); border: 1px solid #f6c0c0; }
+    .message.success { background: #eaf7ef; color: var(--green); border: 1px solid #bfe8c6; }
+    .message.visible { display: block; }
+    input[type="number"] { -moz-appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">RePlate<span>.</span></div>
+    <div class="header-actions">
+      <a class="button-link" href="/marketplace">Marketplace</a>
+      <button class="button-link" onclick="logout()">Log out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="header-row">
+      <div>
+        <h1>Nearby food discovery</h1>
+        <div class="subtitle">Find nearby surplus meals, filter by price and freshness, and reserve before pickup.</div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="filters">
+        <div class="field">
+          <label for="location">Pickup location</label>
+          <input id="location" type="text" placeholder="e.g. Dhanmondi" />
+        </div>
+        <div class="field">
+          <label for="category">Food name</label>
+          <input id="category" type="text" placeholder="e.g. Bread, Biryani, Cake" />
+        </div>
+        <div class="field">
+          <label for="maxPrice">Max price</label>
+          <input id="maxPrice" type="number" step="0.01" value="1000" />
+        </div>
+        <div class="field">
+          <label for="expiry">Expiry within (hours)</label>
+          <input id="expiry" type="number" step="1" placeholder="Any time" />
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="primary-btn" onclick="loadNearbyFood()">Find nearby food</button>
+        <button class="secondary-btn" onclick="loadSearchResults()">Apply filters</button>
+      </div>
+
+      <div id="message" class="message"></div>
+    </section>
+
+    <section>
+      <div class="header-row" style="margin-top: 28px; margin-bottom: 12px;">
+        <h2 style="margin:0;">Available Food</h2>
+      </div>
+      <div id="results" class="results"></div>
+    </section>
+
+    <section style="margin-top: 32px;">
+      <div class="header-row" style="margin-top: 0; margin-bottom: 12px;">
+        <h2 style="margin:0;">My transaction history</h2>
+      </div>
+      <div id="history" class="history"></div>
+    </section>
+  </main>
+
+  <script>
+    function getToken() {
+      return localStorage.getItem('session_token');
+    }
+
+    function showMessage(msg, type = 'success') {
+      const el = document.getElementById('message');
+      el.textContent = msg;
+      el.classList.remove('success', 'error');
+      el.classList.add(type, 'visible');
+    }
+
+    function authHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': getToken() || ''
+      };
+    }
+
+    async function fetchJson(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...authHeaders(),
+          ...(options.headers || {})
+        }
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const result = contentType.includes('application/json') ? await response.json() : await response.text();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in again as a consumer before using this feature.');
+        }
+        if (response.status === 403) {
+          throw new Error('This page is available only to consumer accounts.');
+        }
+        const message = typeof result === 'string' ? result : (result.detail || 'Request failed');
+        throw new Error(message);
+      }
+
+      return result;
+    }
+
+    function clearMessage() {
+      const el = document.getElementById('message');
+      el.textContent = '';
+      el.classList.remove('success', 'error', 'visible');
+    }
+
+    function renderListings(listings, category = '') {
+      const resultsEl = document.getElementById('results');
+      if (!listings.length) {
+        const message = category
+          ? `No such food available right now for food name "${category}" at the selected location.`
+          : 'No available food matches these filters. Try changing the filters.';
+        resultsEl.innerHTML = `<div class="card"><strong>${message}</strong></div>`;
+        return;
+      }
+
+      resultsEl.innerHTML = listings.map(listing => {
+        const status = listing.available_quantity > 0 ? 'Available' : 'Waitlist';
+        const distance = listing.distance_km !== null && listing.distance_km !== undefined ? `${listing.distance_km} km away` : 'Location unavailable';
+        const price = listing.discounted_price ?? listing.original_price;
+        const oldPrice = listing.discount_percentage > 0 ? `<span class="small" style="text-decoration: line-through;">$${listing.original_price}</span>` : '';
+        const qty = `${listing.available_quantity} ${listing.unit} left`;
+        return `
+          <article class="card">
+            <div class="listing-top">
+              <div>
+                <h3 class="listing-name">${listing.food_name}</h3>
+                <div class="meta">${listing.restaurant_name}</div>
+              </div>
+              <span class="pill ${listing.available_quantity > 0 ? 'alt' : ''}">${status}</span>
+            </div>
+            <div class="meta">${listing.description}</div>
+            <div class="meta">Category: ${listing.category} · ${distance} · Expires in ${listing.expiry_hours_left}h</div>
+            <div class="meta">Pickup: ${listing.pickup_location}</div>
+            <div class="status-bar">
+              <div>
+                ${oldPrice}
+                <div class="price">$${price}</div>
+              </div>
+              <div class="small">${qty}</div>
+            </div>
+            <div class="buttons">
+              <button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve</button>
+              <button class="waitlist-btn" onclick="joinWaitlist('${listing.id}')">Waitlist</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderHistory(items) {
+      const historyEl = document.getElementById('history');
+      if (!items.length) {
+        historyEl.innerHTML = '<div class="card"><strong>No transactions yet.</strong><div class="meta">Your reservation history will appear here.</div></div>';
+        return;
+      }
+
+      historyEl.innerHTML = items.map(item => `
+        <article class="card">
+          <div class="listing-top">
+            <div>
+              <h3 class="listing-name">${item.food_name}</h3>
+              <div class="meta">${item.restaurant_name}</div>
+            </div>
+            <span class="pill">${item.status}</span>
+          </div>
+          <div class="meta">Type: ${item.type} · Quantity: ${item.quantity} · Total: $${item.total_amount || 0}</div>
+          <div class="meta">Reserved: ${new Date(item.reserved_at).toLocaleString()}</div>
+        </article>
+      `).join('');
+    }
+
+    async function loadNearbyFood() {
+      try {
+        clearMessage();
+        const location = document.getElementById('location').value;
+        const foodName = document.getElementById('category').value.trim();
+        const params = new URLSearchParams({
+          ...(location ? { location } : {}),
+          ...(foodName ? { food_name: foodName } : {})
+        });
+
+        const data = await fetchJson(`/api/consumer/nearby-food?${params.toString()}`);
+        renderListings(data, foodName);
+      } catch (error) {
+        document.getElementById('results').innerHTML = '';
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function loadSearchResults() {
+      try {
+        clearMessage();
+        const params = new URLSearchParams();
+        const foodName = document.getElementById('category').value.trim();
+        if (foodName) params.set('food_name', foodName);
+        const maxPrice = document.getElementById('maxPrice').value;
+        const expiry = document.getElementById('expiry').value;
+        if (maxPrice) params.set('max_price', maxPrice);
+        if (expiry) params.set('expiry_hours', expiry);
+        const location = document.getElementById('location').value;
+        if (location) params.set('location', location);
+
+        const data = await fetchJson(`/api/consumer/search?${params.toString()}`);
+        renderListings(data, foodName);
+      } catch (error) {
+        document.getElementById('results').innerHTML = '';
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function reserveListing(listingId) {
+      try {
+        const response = await fetchJson(`/api/consumer/reserve/${listingId}?quantity=1`, {
+          method: 'POST'
+        });
+        showMessage(response.message || 'Reservation confirmed', 'success');
+        await loadNearbyFood();
+        await loadHistory();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function joinWaitlist(listingId) {
+      try {
+        const response = await fetchJson(`/api/consumer/waitlist/${listingId}`, { method: 'POST' });
+        showMessage(`Joined waitlist for position ${response.position}`, 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const data = await fetchJson('/api/consumer/history');
+        renderHistory(data);
+      } catch (error) {
+        document.getElementById('history').innerHTML = '<div class="card"><strong>Transaction history unavailable.</strong><div class="meta"></div></div>';
+        document.querySelector('#history .meta').textContent = error.message;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('session_token');
+      window.location.href = '/';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!getToken()) {
+        window.location.href = '/';
+        return;
+      }
+      await loadNearbyFood();
+      await loadHistory();
+    });
+  </script>
+</body>
+</html>
