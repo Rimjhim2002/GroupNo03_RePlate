@@ -24,13 +24,16 @@
   .brand-mark { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px; }
   .brand-mark span { color: var(--slate); }
   .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .topbar-user { font-size: 13px; color: var(--slate); }
-  .back-link, .logout-btn {
+  .back-link, .logout-btn, .nav-link {
     background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
     padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
     cursor: pointer; text-decoration: none; transition: all 0.15s ease;
+    display: inline-block;
+    line-height: 1.2;
   }
-  .back-link:hover, .logout-btn:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+  .back-link:hover, .logout-btn:hover, .nav-link:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
  
   .page { max-width: 700px; margin: 0 auto; padding: 40px 32px 80px; }
   .page-header { margin-bottom: 32px; }
@@ -79,8 +82,13 @@
 <div class="topbar">
   <div class="brand-mark">RePlate<span>.</span></div>
   <div class="topbar-right">
-    <span class="topbar-user" id="userLabel"></span>
-    <a class="back-link" href="/">Dashboard</a>
+    <div class="nav-links">
+      <a class="nav-link" href="/marketplace">Marketplace</a>
+      <a class="nav-link" href="/listings-view">Listings</a>
+      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
+      <a class="nav-link" href="/recommendations-view">Recommendations</a>
+    </div>
+    <span class="topbar-user" id="userLabel">Welcome, User</span>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
@@ -111,7 +119,8 @@
       if (!res.ok) { window.location.href = "/"; return; }
       const user = await res.json();
       if (user.role !== "ngo") { window.location.href = "/"; return; }
-      document.getElementById("userLabel").textContent = user.organization_name || user.name;
+      const displayName = user.organization_name || user.name || "User";
+      document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
       loadDonations();
     } catch (err) {
       window.location.href = "/";

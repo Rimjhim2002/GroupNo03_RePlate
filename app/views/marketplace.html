@@ -56,6 +56,13 @@
       gap: 16px;
     }
 
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .user {
       color: var(--slate);
       font-size: 13px;
@@ -69,6 +76,18 @@
       padding: 7px 14px;
       cursor: pointer;
       font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .nav-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .page {
@@ -260,11 +279,14 @@
     <div class="brand">RePlate<span>.</span></div>
 
     <div class="topbar-right">
-      <span class="user">Welcome, Alex</span>
+      <div class="header-links">
+        <a class="nav-btn" href="/listings-view">Listings</a>
+        <a class="nav-btn" href="/ngo-donations-view">NGO Donations</a>
+        <a class="nav-btn" href="/pickup-slots-view">Pickup Slots</a>
+        <a class="nav-btn" href="/recommendations-view">Recommendations</a>
+      </div>
 
-      <button class="nav-btn" onclick="showDashboard()">
-        Dashboard
-      </button>
+      <span class="user" id="userNameLabel">Loading...</span>
 
       <button class="nav-btn" onclick="logout()">
         Log out
@@ -674,21 +696,52 @@
 
 
 
-    function showDashboard() {
+    function getToken() {
+      return localStorage.getItem("session_token");
+    }
 
+    async function loadUserName() {
+      const token = getToken();
+      const label = document.getElementById("userNameLabel");
+
+      if (!token) {
+        label.textContent = "Guest";
+        return;
+      }
+
+      try {
+        const res = await fetch("/auth/me", {
+          headers: { "Authorization": token }
+        });
+
+        if (!res.ok) {
+          label.textContent = "Guest";
+          return;
+        }
+
+        const user = await res.json();
+        const displayName = user.business_name || user.organization_name || user.name || "User";
+        label.textContent = `Welcome, ${displayName}`;
+      } catch (err) {
+        label.textContent = "Welcome, User";
+      }
+    }
+
+    async function logout() {
+      const token = getToken();
+      if (token) {
+        try {
+          await fetch("/auth/logout", {
+            method: "POST",
+            headers: { "Authorization": token }
+          });
+        } catch (err) {}
+      }
+      localStorage.removeItem("session_token");
       window.location.href = "/";
-
     }
 
-
-
-    function logout() {
-
-      alert(
-        "Log out clicked — connect this button to your logout function."
-      );
-
-    }
+    loadUserName();
 
   </script>
 

@@ -47,12 +47,19 @@
     gap: 16px;
   }
 
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
   .topbar-user {
     font-size: 13px;
     color: var(--slate);
   }
 
-  .back-link, .logout-btn {
+  .back-link, .logout-btn, .nav-link {
     background: transparent;
     border: 1.5px solid rgba(255,255,255,0.25);
     color: var(--white);
@@ -64,8 +71,10 @@
     cursor: pointer;
     text-decoration: none;
     transition: all 0.15s ease;
+    display: inline-block;
+    line-height: 1.2;
   }
-  .back-link:hover, .logout-btn:hover {
+  .back-link:hover, .logout-btn:hover, .nav-link:hover {
     border-color: var(--white);
     background: rgba(255,255,255,0.08);
   }
@@ -354,8 +363,13 @@
 <div class="topbar">
   <div class="brand-mark">RePlate<span>.</span></div>
   <div class="topbar-right">
+    <div class="nav-links">
+      <a class="nav-link" href="/marketplace">Marketplace</a>
+      <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
+      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
+      <a class="nav-link" href="/recommendations-view">Recommendations</a>
+    </div>
     <span class="topbar-user" id="userLabel"></span>
-    <a class="back-link" href="/">Dashboard</a>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
@@ -472,11 +486,8 @@
         return;
       }
       const user = await res.json();
-      if (user.role !== "restaurant") {
-        window.location.href = "/";
-        return;
-      }
-      document.getElementById("userLabel").textContent = user.business_name || user.name;
+      const displayName = user.business_name || user.organization_name || user.name || "User";
+      document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
       loadListings();
     } catch (err) {
       window.location.href = "/";

@@ -488,6 +488,10 @@
     document.getElementById("errorMsg").classList.remove("visible");
   }
 
+function goToListingsPage() {
+    window.location.href = "/listings-view";
+}
+
 function showDashboard(user) {
     document.getElementById("authLayout").style.display = "none";
 
@@ -520,11 +524,12 @@ function showDashboard(user) {
 
     if (user.role === "restaurant") {
 
-        const link = document.createElement("a");
+        const link = document.createElement("button");
 
         link.id = "manageListingsLink";
-        link.href = "/listings-view";
+        link.type = "button";
         link.textContent = "Manage Listings →";
+        link.onclick = goToListingsPage;
 
         link.style.marginTop = "16px";
         link.style.display = "inline-block";
@@ -532,6 +537,9 @@ function showDashboard(user) {
         link.style.fontWeight = "600";
         link.style.fontSize = "14px";
         link.style.textDecoration = "none";
+        link.style.background = "transparent";
+        link.style.border = "none";
+        link.style.cursor = "pointer";
 
         dashCard.appendChild(link);
     }
