@@ -13,7 +13,9 @@ from app.services import (
 )
  
 # TODO: point this at whichever auth dependency the team actually builds
-from app.core.auth import get_current_user
+from app.core.dependencies import get_current_user
+from app.core.rbac import require_role
+from app.models.user import UserRole
  
 router = APIRouter(prefix="/api/lifecycle", tags=["Lifecycle & NGO"])
  
@@ -87,9 +89,15 @@ async def join_waitlist(food_listing_id: str, current_user: User = Depends(get_c
  
 # ---------- Pickup Time Slot Management ----------
 @router.post("/listings/{food_listing_id}/pickup-slots")
-async def add_slot(food_listing_id: str, start_time: datetime, end_time: datetime, capacity: int):
+async def add_slot(
+    food_listing_id: str,
+    start_time: datetime,
+    end_time: datetime,
+    capacity: int,
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+):
     try:
-        return await pickup_service.add_pickup_slot(food_listing_id, start_time, end_time, capacity)
+        return await pickup_service.add_pickup_slot(food_listing_id, start_time, end_time, capacity, current_user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
  

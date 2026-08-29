@@ -1,11 +1,13 @@
+from beanie import PydanticObjectId
+
 from app.models.food_listing import FoodListing, ListingStatus
 from app.models.food_recommendation import FoodRecommendation, RecommendationType
 
 URGENT_DONATE_THRESHOLD_HOURS = 3
 DONATE_THRESHOLD_HOURS = 8
 DISCOUNT_THRESHOLD_HOURS = 24
- 
- 
+
+
 async def generate_recommendation(food_listing: FoodListing) -> FoodRecommendation:
     """
     Core of the Smart Food Lifecycle Recommendation feature.
@@ -13,7 +15,7 @@ async def generate_recommendation(food_listing: FoodListing) -> FoodRecommendati
     restaurant should discount-and-sell it or donate it, with a confidence score.
     """
     remaining_hours = food_listing.get_remaining_shelf_life_hours()
- 
+
     if remaining_hours <= URGENT_DONATE_THRESHOLD_HOURS:
         rec_type = RecommendationType.URGENT_DONATE
         suggested_discount = 100.0
@@ -38,9 +40,9 @@ async def generate_recommendation(food_listing: FoodListing) -> FoodRecommendati
         priority_score = 20.0
         confidence_score = 0.6
         reason = "Plenty of shelf life left — a small discount is enough to attract buyers."
- 
+
     recommendation = FoodRecommendation(
-        food_listing_id=str(food_listing.id),
+        food_listing=food_listing,
         recommendation_type=rec_type,
         suggested_discount=suggested_discount,
         priority_score=priority_score,
@@ -49,22 +51,22 @@ async def generate_recommendation(food_listing: FoodListing) -> FoodRecommendati
     )
     await recommendation.insert()
     return recommendation
- 
- 
+
+
 async def generate_recommendations_for_all_active_listings() -> list[FoodRecommendation]:
     """Meant to be triggered periodically (cron / scheduled task) to refresh every active listing."""
     active_listings = await FoodListing.find(
         FoodListing.status == ListingStatus.AVAILABLE
     ).to_list()
- 
+
     recommendations = []
     for listing in active_listings:
         recommendation = await generate_recommendation(listing)
         recommendations.append(recommendation)
     return recommendations
- 
- 
+
+
 async def get_latest_recommendation(food_listing_id: str) -> FoodRecommendation | None:
     return await FoodRecommendation.find(
-        FoodRecommendation.food_listing_id == food_listing_id
+        FoodRecommendation.food_listing.id == PydanticObjectId(food_listing_id)
     ).sort(-FoodRecommendation.generated_at).first_or_none()
