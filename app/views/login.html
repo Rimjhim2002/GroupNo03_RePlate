@@ -544,27 +544,19 @@ function showDashboard(user) {
         dashCard.appendChild(link);
     }
 
-    if (user.role === "consumer" || user.role === "ngo") {
-
-      
-        let marketplaceLink =
-            document.getElementById("marketplaceLink");
-
-        if (!marketplaceLink) {
-
-            marketplaceLink = document.createElement("a");
-
-            marketplaceLink.id = "marketplaceLink";
-            marketplaceLink.href = "/marketplace";
-            marketplaceLink.textContent = "Grab & Save";
-
-            marketplaceLink.style.marginTop = "16px";
-            marketplaceLink.style.display = "inline-block";
-            marketplaceLink.style.color = "#1D4ED8";
-            marketplaceLink.style.fontWeight = "600";
-            marketplaceLink.style.textDecoration = "none";
-
-            dashCard.appendChild(marketplaceLink);
+    if (user.role === "consumer") {
+        let discoveryLink = document.getElementById("consumerDiscoveryLink");
+        if (!discoveryLink) {
+            discoveryLink = document.createElement("a");
+            discoveryLink.id = "consumerDiscoveryLink";
+            discoveryLink.href = "/consumer-search";
+            discoveryLink.textContent = "Nearby Food Discovery";
+            discoveryLink.style.marginTop = "8px";
+            discoveryLink.style.display = "inline-block";
+            discoveryLink.style.color = "#14532D";
+            discoveryLink.style.fontWeight = "700";
+            discoveryLink.style.textDecoration = "none";
+            dashCard.appendChild(discoveryLink);
         }
     }
 }
@@ -665,6 +657,20 @@ function showAuth() {
 
     if (manageListingsLink) {
         manageListingsLink.remove();
+    }
+
+    const consumerDiscoveryLink =
+        document.getElementById("consumerDiscoveryLink");
+
+    if (consumerDiscoveryLink) {
+        consumerDiscoveryLink.remove();
+    }
+
+    const consumerHistoryLink =
+        document.getElementById("consumerHistoryLink");
+
+    if (consumerHistoryLink) {
+        consumerHistoryLink.remove();
     }
 }
 

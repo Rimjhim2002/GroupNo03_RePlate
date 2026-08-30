@@ -6,8 +6,8 @@ from app.routes import auth_routes
 from app.routes import auth_routes, dashboard_routes
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from app.routes import auth_routes, dashboard_routes, food_listing_routes
-from app.routes import lifecycle_routes  # <-- NEW: your router
+from app.routes import auth_routes, dashboard_routes, food_listing_routes, consumer_routes
+from app.routes import lifecycle_routes
 from app.services.expiry_monitor import monitor_expiry
 @asynccontextmanager
 async def lifespan(app:FastAPI):
@@ -29,10 +29,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth_routes.router)
- 
 app.include_router(dashboard_routes.router)
 app.include_router(food_listing_routes.router)
-app.include_router(lifecycle_routes.router)  # <-- NEW: registers your 5 features' endpoints
+app.include_router(consumer_routes.router)
+app.include_router(lifecycle_routes.router)
  
 @app.get("/")
 async def serve_login_page():
@@ -45,6 +45,14 @@ async def serve_listings_page():
 @app.get("/marketplace")
 async def serve_marketplace_page():
     return FileResponse("app/views/marketplace.html")
+
+@app.get("/consumer-search")
+async def serve_consumer_search_page():
+    return FileResponse("app/views/consumer_search.html")
+
+@app.get("/consumer-history")
+async def serve_consumer_history_page():
+    return FileResponse("app/views/consumer_history.html")
  
 # ---------- NEW: your 4 pages ----------
 @app.get("/recommendations-view")

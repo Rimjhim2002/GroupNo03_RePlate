@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RePlate - My History</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --navy: #0b2545;
+      --blue: #1d4ed8;
+      --green: #166534;
+      --text: #1f2d3d;
+      --muted: #61738a;
+      --card: #ffffff;
+      --border: #dfeaf3;
+      --shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; background: var(--navy); color: white; padding: 18px 32px;
+    }
+    .brand { font-size: 28px; font-weight: 700; }
+    .brand span { color: #9bc1ff; }
+    .navs { display: flex; gap: 12px; align-items: center; }
+    .nav-btn {
+      border: 1px solid rgba(255,255,255,0.25); background: transparent; color: white; padding: 9px 14px; border-radius: 8px; cursor: pointer; text-decoration: none;
+    }
+    .page { max-width: 1100px; margin: 28px auto; padding: 0 18px 60px; }
+    h1 { margin: 0 0 8px; font-size: 34px; }
+    .subtitle { color: var(--muted); margin: 0 0 22px; }
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 22px;
+    }
+    .stat {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow);
+    }
+    .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .stat-value { font-size: 26px; font-weight: 700; margin-top: 8px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 18px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .badge {
+      display: inline-block; padding: 6px 10px; border-radius: 999px; background: #eaf7ee; color: var(--green); font-size: 11px; font-weight: 700;
+    }
+    .empty { color: var(--muted); padding: 18px 0; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">RePlate<span>.</span></div>
+    <div class="navs">
+      <a class="nav-btn" href="/consumer-search">Nearby Food</a>
+      <button class="nav-btn" onclick="logout()">Log out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <h1>My History</h1>
+    <p class="subtitle">Track your reservations, purchases, and completed food pickups.</p>
+
+    <section id="stats" class="stats"></section>
+
+    <section class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Food</th>
+            <th>Restaurant</th>
+            <th>Type</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="historyTable"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const token = () => localStorage.getItem('session_token');
+
+    function renderStats(summary) {
+      const stats = [
+        { label: 'Total spend', value: '$' + Number(summary.total_spend || 0).toFixed(2) },
+        { label: 'Active reservations', value: summary.active_reservations || 0 },
+        { label: 'Completed orders', value: summary.completed_orders || 0 },
+        { label: 'Meals received', value: summary.meals_received || 0 }
+      ];
+
+      const container = document.getElementById('stats');
+      container.innerHTML = stats.map(stat => `
+        <div class="stat">
+          <div class="stat-label">${stat.label}</div>
+          <div class="stat-value">${stat.value}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderRows(transactions) {
+      const tbody = document.getElementById('historyTable');
+      if (!transactions.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No transaction history yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(tx => `
+        <tr>
+          <td>${tx.food_name || 'Food item'}</td>
+          <td>${tx.restaurant_name || 'Restaurant'}</td>
+          <td>${tx.type || 'sale'}</td>
+          <td>${tx.quantity}</td>
+          <td>$${Number(tx.total_amount || 0).toFixed(2)}</td>
+          <td><span class="badge">${tx.status}</span></td>
+          <td>${new Date(tx.reserved_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadHistory() {
+      const res = await fetch('/consumer/history', {
+        headers: { 'Authorization': token() }
+      });
+
+      if (!res.ok) {
+        document.getElementById('historyTable').innerHTML = '<tr><td colspan="7" class="empty">Please log in as a consumer to view your history.</td></tr>';
+        return;
+      }
+
+      const data = await res.json();
+      renderStats(data.summary || {});
+      renderRows(data.transactions || []);
+    }
+
+    async function logout() {
+      const tokenValue = token();
+      if (tokenValue) {
+        await fetch('/auth/logout', { method: 'POST', headers: { 'Authorization': tokenValue } });
+      }
+      localStorage.removeItem('session_token');
+      window.location.href = '/';
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>

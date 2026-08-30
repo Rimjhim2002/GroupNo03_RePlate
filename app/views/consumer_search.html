@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RePlate - Consumer Search</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --navy: #0b2545;
+            --blue: #1d4ed8;
+            --green: #166534;
+            --text: #243b53;
+            --muted: #6b7a90;
+            --card: #ffffff;
+            --border: #dfeaf3;
+            --shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; font-family: Inter, Arial, sans-serif; background: var(--bg); color: var(--text);
+        }
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--navy); color: white; padding: 18px 32px;
+        }
+        .brand { font-size: 28px; font-weight: 700; }
+        .brand span { color: #9bc1ff; }
+        .navs { display: flex; gap: 12px; align-items: center; }
+        .nav-btn {
+            border: 1px solid rgba(255,255,255,0.25); background: transparent; color: white;
+            padding: 9px 14px; border-radius: 8px; cursor: pointer; text-decoration: none;
+        }
+        .page { max-width: 1100px; margin: 28px auto; padding: 0 18px 60px; }
+        h1 { margin: 0 0 8px; font-size: 34px; }
+        .subtitle { color: var(--muted); margin: 0 0 24px; }
+        .panel {
+            background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow);
+            border-radius: 16px; padding: 20px; margin-bottom: 22px;
+        }
+        .filters {
+            display: grid; grid-template-columns: 2fr 1.3fr 1.4fr 1.2fr 1.1fr; gap: 14px; align-items: end;
+        }
+        input, select, button {
+            width: 100%; padding: 12px 13px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px;
+        }
+        button.search-btn, button.filter-btn {
+            background: var(--blue); color: white; border: none; font-weight: 700; cursor: pointer;
+        }
+        .history-btn {
+            background: #e9f0ff; color: var(--navy); border: 1px solid #d9e4ff; font-weight: 700; cursor: pointer;
+        }
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;
+        }
+        .card {
+            background: white; border: 1px solid var(--border); border-radius: 16px; padding: 18px;
+            display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow);
+        }
+        .meta { display: flex; justify-content: space-between; gap: 12px; }
+        .food-name { margin: 0; font-size: 22px; }
+        .badge {
+            background: #eaf7ee; color: var(--green); border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 700;
+        }
+        .price-row { display: flex; align-items: center; gap: 8px; }
+        .old-price { text-decoration: line-through; color: var(--muted); }
+        .price { font-size: 28px; font-weight: 700; color: var(--blue); }
+        .muted { color: var(--muted); font-size: 13px; }
+        .actions { display: flex; gap: 10px; }
+        .actions input { width: 80px; }
+        .reserve-btn {
+            flex: 1; background: var(--blue); color: white; border: none; font-weight: 700; cursor: pointer;
+        }
+        .waitlist-btn {
+            width: 100%; border: 1px solid var(--border); background: #f8fbff; color: var(--navy); font-weight: 600; cursor: pointer;
+        }
+        .message {
+            display: none; margin-top: 14px; border-radius: 10px; padding: 12px 14px; background: #edfdf3; color: #166534; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">RePlate<span>.</span></div>
+        <div class="navs">
+            <a class="nav-btn" href="/marketplace">Marketplace</a>
+            <a class="nav-btn" href="/consumer-history">Transaction History</a>
+            <button class="nav-btn" onclick="logout()">Log out</button>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1>Nearby food discovery</h1>
+        <p class="subtitle">Search for discounted food around you, reserve what you need, or join a waitlist.</p>
+
+        <div class="panel">
+            <div class="filters">
+                <input id="searchInput" type="text" placeholder="Search Food" />
+                <input id="maxPriceInput" type="number" min="0" max="1500" step="0.5" placeholder="Max price" />
+                <input id="locationInput" type="text" placeholder="Location" />
+                <input id="maxExpiryInput" type="number" min="1" step="1" placeholder="Max expiry (hrs)" />
+                <div style="display:flex; gap:10px;">
+                    <button class="search-btn" onclick="searchByFoodName()">Search</button>
+                    <button class="filter-btn" onclick="applyFilters()">Filter</button>
+                </div>
+            </div>
+            <div id="message" class="message"></div>
+        </div>
+
+        <h2>Available Food</h2>
+        <section id="resultsGrid" class="grid"></section>
+    </main>
+
+    <script>
+        const token = () => localStorage.getItem('session_token');
+
+        function showMessage(text, isError = false) {
+            const el = document.getElementById('message');
+            el.textContent = text;
+            el.style.display = 'block';
+            el.style.background = isError ? '#fee2e2' : '#edfdf3';
+            el.style.color = isError ? '#991b1b' : '#166534';
+        }
+
+        function renderListing(listing) {
+            const card = document.createElement('article');
+            card.className = 'card';
+
+            const remainingHours = listing.remaining_hours ?? 0;
+            const badge = remainingHours > 24 ? 'Fresh' : remainingHours > 6 ? 'Limited' : 'Urgent';
+            const price = Number(listing.discounted_price || 0).toFixed(2);
+            const original = Number(listing.original_price || 0).toFixed(2);
+
+            card.innerHTML = `
+                <div class="meta">
+                    <div>
+                        <h2 class="food-name">${listing.food_name}</h2>
+                        <div class="muted">${listing.category} • ${listing.restaurant_name || 'Restaurant'}</div>
+                    </div>
+                    <span class="badge">${badge}</span>
+                </div>
+                <div class="muted">${listing.pickup_location}</div>
+                <div class="price-row">
+                    <span class="old-price">$${original}</span>
+                    <span class="price">$${price}</span>
+                </div>
+                <div class="muted">${listing.available_quantity} ${listing.unit} left • ${listing.remaining_hours}h left</div>
+                <div class="actions">
+                    <input type="number" id="qty-${listing.id}" min="1" max="${listing.available_quantity}" value="1" />
+                    <button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve</button>
+                </div>
+                <button class="waitlist-btn" onclick="joinWaitlist('${listing.id}')">Join waitlist</button>
+            `;
+            return card;
+        }
+
+        function searchByFoodName() {
+            const search = document.getElementById('searchInput').value.trim();
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            return loadListingsWithParams(params);
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.trim();
+            const maxPrice = document.getElementById('maxPriceInput').value;
+            const location = document.getElementById('locationInput').value.trim();
+            const maxExpiryHours = document.getElementById('maxExpiryInput').value;
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (maxPrice) params.append('max_price', maxPrice);
+            if (location) params.append('location', location);
+            if (maxExpiryHours) params.append('max_expiry_hours', maxExpiryHours);
+            return loadListingsWithParams(params);
+        }
+
+        async function loadListingsWithParams(params) {
+            const res = await fetch(`/consumer/search?${params.toString()}`, {
+                headers: { 'Authorization': token() }
+            });
+
+            if (!res.ok) {
+                showMessage('Unable to load food listings.', true);
+                return;
+            }
+
+            const data = await res.json();
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+
+            if (!data.length) {
+                grid.innerHTML = '<div class="card"><p class="muted">No listings match your current search.</p></div>';
+                return;
+            }
+
+            data.forEach(listing => grid.appendChild(renderListing(listing)));
+        }
+
+        async function reserveListing(listingId) {
+            const qtyInput = document.getElementById('qty-' + listingId);
+            const quantity = Number(qtyInput?.value || 1);
+
+            const res = await fetch(`/consumer/listings/${listingId}/reserve?quantity=${quantity}`, {
+                method: 'POST',
+                headers: { 'Authorization': token() }
+            });
+            const body = await res.json();
+            if (!res.ok) {
+                showMessage(body.detail || 'Reservation failed.', true);
+                return;
+            }
+            showMessage(`${body.message} Total: $${Number(body.total_amount).toFixed(2)}`);
+            await loadListings();
+        }
+
+        async function joinWaitlist(listingId) {
+            const res = await fetch(`/consumer/listings/${listingId}/waitlist`, {
+                method: 'POST',
+                headers: { 'Authorization': token() }
+            });
+            const body = await res.json();
+            if (!res.ok) {
+                showMessage(body.detail || 'Unable to join waitlist.', true);
+                return;
+            }
+            showMessage(body.message || 'Joined waitlist successfully.');
+        }
+
+        async function logout() {
+            const tokenValue = token();
+            if (tokenValue) {
+                await fetch('/auth/logout', { method: 'POST', headers: { 'Authorization': tokenValue } });
+            }
+            localStorage.removeItem('session_token');
+            window.location.href = '/';
+        }
+
+        loadListings();
+    </script>
+</body>
+</html>
