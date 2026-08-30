@@ -25,7 +25,16 @@
   .brand-mark span { color: var(--slate); }
   .topbar-right { display: flex; align-items: center; gap: 16px; }
   .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .topbar-user { font-size: 13px; color: var(--slate); }
+  .topbar-user {
+    font-size: 12px;
+    color: var(--slate);
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+  }
   .back-link, .logout-btn, .nav-link {
     background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
     padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
@@ -94,7 +103,14 @@
       <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
       <a class="nav-link" href="/recommendations-view">Recommendations</a>
     </div>
-    <span class="topbar-user" id="userLabel">Welcome, User</span>
+    <button
+      id="userLabel"
+      class="topbar-user"
+      type="button"
+      onclick="window.location.href = '/'"
+    >
+      Welcome, User
+    </button>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>

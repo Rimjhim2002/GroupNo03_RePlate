@@ -515,6 +515,22 @@ function showDashboard(user) {
         oldMarketplaceLink.remove();
     }
 
+    const marketplaceLink = document.createElement("button");
+    marketplaceLink.id = "marketplaceLink";
+    marketplaceLink.type = "button";
+    marketplaceLink.textContent = "Marketplace →";
+    marketplaceLink.onclick = () => window.location.href = "/marketplace";
+    marketplaceLink.style.marginTop = "16px";
+    marketplaceLink.style.display = "inline-block";
+    marketplaceLink.style.color = "#1D4ED8";
+    marketplaceLink.style.fontWeight = "600";
+    marketplaceLink.style.fontSize = "14px";
+    marketplaceLink.style.textDecoration = "none";
+    marketplaceLink.style.background = "transparent";
+    marketplaceLink.style.border = "none";
+    marketplaceLink.style.cursor = "pointer";
+    dashCard.appendChild(marketplaceLink);
+
     const oldManageLink =
         document.getElementById("manageListingsLink");
 

@@ -65,7 +65,15 @@
 
     .user {
       color: var(--slate);
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      padding: 0;
+      border-radius: 0;
+      cursor: pointer;
+      line-height: 1.2;
+      text-decoration: none;
     }
 
     .nav-btn {
@@ -286,7 +294,14 @@
         <a class="nav-btn" href="/recommendations-view">Recommendations</a>
       </div>
 
-      <span class="user" id="userNameLabel">Loading...</span>
+      <button
+        id="userNameLabel"
+        class="user"
+        type="button"
+        onclick="window.location.href = '/'"
+      >
+        Loading...
+      </button>
 
       <button class="nav-btn" onclick="logout()">
         Log out
@@ -312,339 +327,7 @@
 
 
     <!-- FOOD LISTINGS -->
-    <section class="grid">
-
-
-      <!-- FOOD 1 -->
-      <article class="card">
-
-        <div class="card-top">
-          <div>
-            <h2 class="food-name">
-              Chicken Biryani
-            </h2>
-
-            <p class="description">
-              Freshly prepared chicken biryani available for pickup.
-            </p>
-          </div>
-
-          <span class="badge">
-            2.5h left
-          </span>
-        </div>
-
-
-        <div class="location">
-          5 portions · Dhanmondi
-        </div>
-
-
-        <div class="price-row">
-          <span class="old-price">
-            $4.00
-          </span>
-
-          <span class="price">
-            $2.50
-          </span>
-        </div>
-
-
-        <span class="badge stock-badge">
-          5 portions left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-1"
-            type="number"
-            min="1"
-            max="5"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Chicken Biryani', 1)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-1')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-1" class="pickup">
-          Today: 4:00 PM – 5:00 PM<br>
-          Today: 5:30 PM – 6:30 PM
-        </div>
-
-      </article>
-
-
-
-      <!-- FOOD 2 -->
-      <article class="card">
-
-        <div class="card-top">
-
-          <div>
-
-            <h2 class="food-name">
-              Vegetable Sandwiches
-            </h2>
-
-            <p class="description">
-              Fresh vegetable sandwiches prepared earlier today.
-            </p>
-
-          </div>
-
-          <span class="badge">
-            5.2h left
-          </span>
-
-        </div>
-
-
-        <div class="location">
-          8 pieces · Gulshan
-        </div>
-
-
-        <div class="price-row">
-
-          <span class="old-price">
-            $2.50
-          </span>
-
-          <span class="price">
-            $1.50
-          </span>
-
-        </div>
-
-
-        <span class="badge stock-badge">
-          8 pieces left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-2"
-            type="number"
-            min="1"
-            max="8"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Vegetable Sandwiches', 2)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-2')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-2" class="pickup">
-          Today: 3:30 PM – 4:30 PM<br>
-          Today: 6:00 PM – 7:00 PM
-        </div>
-
-      </article>
-
-
-
-      <!-- FOOD 3 -->
-      <article class="card">
-
-        <div class="card-top">
-
-          <div>
-
-            <h2 class="food-name">
-              Creamy Pasta
-            </h2>
-
-            <p class="description">
-              Creamy pasta with vegetables, packed and ready for pickup.
-            </p>
-
-          </div>
-
-          <span class="badge">
-            7.8h left
-          </span>
-
-        </div>
-
-
-        <div class="location">
-          3 portions · Banani
-        </div>
-
-
-        <div class="price-row">
-
-          <span class="old-price">
-            $3.25
-          </span>
-
-          <span class="price">
-            $2.00
-          </span>
-
-        </div>
-
-
-        <span class="badge stock-badge">
-          3 portions left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-3"
-            type="number"
-            min="1"
-            max="3"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Creamy Pasta', 3)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-3')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-3" class="pickup">
-          Today: 5:00 PM – 6:00 PM<br>
-          Today: 7:00 PM – 8:00 PM
-        </div>
-
-      </article>
-
-
-
-      <!-- FOOD 4 -->
-      <article class="card">
-
-        <div class="card-top">
-
-          <div>
-
-            <h2 class="food-name">
-              Chocolate Cake
-            </h2>
-
-            <p class="description">
-              Slices of chocolate cake from today's bakery surplus.
-            </p>
-
-          </div>
-
-          <span class="badge">
-            10.5h left
-          </span>
-
-        </div>
-
-
-        <div class="location">
-          6 slices · Uttara
-        </div>
-
-
-        <div class="price-row">
-
-          <span class="old-price">
-            $2.00
-          </span>
-
-          <span class="price">
-            $1.00
-          </span>
-
-        </div>
-
-
-        <span class="badge stock-badge">
-          6 slices left
-        </span>
-
-
-        <div class="actions">
-
-          <input
-            id="qty-4"
-            type="number"
-            min="1"
-            max="6"
-            value="1"
-          />
-
-          <button
-            class="reserve-btn"
-            onclick="reserveFood('Chocolate Cake', 4)"
-          >
-            Reserve food
-          </button>
-
-        </div>
-
-
-        <button
-          class="pickup-btn"
-          onclick="togglePickup('pickup-4')"
-        >
-          View pickup times
-        </button>
-
-
-        <div id="pickup-4" class="pickup">
-          Today: 2:00 PM – 3:00 PM<br>
-          Today: 4:30 PM – 5:30 PM
-        </div>
-
-      </article>
-
-
-    </section>
+    <section id="listingsGrid" class="grid"></section>
 
   </main>
 
@@ -653,51 +336,127 @@
   <!-- JAVASCRIPT -->
   <script>
 
-    function reserveFood(foodName, id) {
+    function getToken() {
+      return localStorage.getItem("session_token");
+    }
 
-      const quantity =
-        Number(document.getElementById("qty-" + id).value);
+    function showMessage(text, isError = false) {
+      const element = document.getElementById("message");
+      element.style.display = "block";
+      element.style.background = isError ? "#fee2e2" : "#edfdf3";
+      element.style.color = isError ? "#991b1b" : "#166534";
+      element.textContent = text;
+    }
 
-      const message =
-        document.getElementById("message");
+    function renderListing(listing) {
+      const card = document.createElement("article");
+      card.className = "card";
 
+      const remainingHours = Number(listing.remaining_hours || 0);
+      const badge = remainingHours > 24 ? "Fresh" : remainingHours > 6 ? "Limited" : "Urgent";
+      const price = Number(listing.discounted_price || 0).toFixed(2);
+      const original = Number(listing.original_price || 0).toFixed(2);
 
-      if (!quantity || quantity < 1) {
+      card.innerHTML = `
+        <div class="card-top">
+          <div>
+            <h2 class="food-name">${listing.food_name}</h2>
+            <p class="description">${listing.description || "Freshly prepared food available for pickup."}</p>
+          </div>
+          <span class="badge">${badge}</span>
+        </div>
 
-        message.style.display = "block";
+        <div class="location">${listing.available_quantity} ${listing.unit || "items"} · ${listing.pickup_location || listing.restaurant_name || "Pickup location"}</div>
 
-        message.textContent =
-          "Please select a valid quantity.";
+        <div class="price-row">
+          <span class="old-price">$${original}</span>
+          <span class="price">$${price}</span>
+        </div>
 
+        <span class="badge stock-badge">${listing.available_quantity} left</span>
+
+        <div class="actions">
+          <input id="qty-${listing.id}" type="number" min="1" max="${listing.available_quantity}" value="1" />
+          <button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve food</button>
+        </div>
+
+        <button class="pickup-btn" onclick="togglePickup('pickup-${listing.id}')">View pickup times</button>
+
+        <div id="pickup-${listing.id}" class="pickup">
+          ${listing.pickup_location || "Pickup location available on request"}
+        </div>
+      `;
+
+      return card;
+    }
+
+    async function loadListings() {
+      const grid = document.getElementById("listingsGrid");
+      const token = getToken();
+
+      if (!token) {
+        grid.innerHTML = '<article class="card"><div class="card-top"><div><h2 class="food-name">No listings available</h2><p class="description">Please log in to view real marketplace listings.</p></div></div></article>';
+        showMessage("Please log in to view marketplace listings.", true);
         return;
       }
 
+      try {
+        const response = await fetch("/consumer/search", {
+          headers: { "Authorization": token }
+        });
 
-      message.style.display = "block";
+        if (!response.ok) {
+          throw new Error("Unable to load marketplace listings.");
+        }
 
-      message.textContent =
-        quantity +
-        " × " +
-        foodName +
-        " reserved successfully!";
+        const listings = await response.json();
+        grid.innerHTML = "";
 
+        if (!listings.length) {
+          grid.innerHTML = '<article class="card"><div class="card-top"><div><h2 class="food-name">No real listings yet</h2><p class="description">New food listings will appear here as they are added.</p></div></div></article>';
+          return;
+        }
+
+        listings.forEach((listing) => grid.appendChild(renderListing(listing)));
+      } catch (error) {
+        grid.innerHTML = '<article class="card"><div class="card-top"><div><h2 class="food-name">Marketplace unavailable</h2><p class="description">Unable to load the current listings right now.</p></div></div></article>';
+        showMessage("Unable to load marketplace listings.", true);
+      }
     }
 
+    async function reserveListing(listingId) {
+      const token = getToken();
+      const quantity = Number(document.getElementById("qty-" + listingId)?.value || 1);
 
+      if (!token) {
+        showMessage("Please log in before reserving food.", true);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/consumer/listings/${listingId}/reserve?quantity=${quantity}`, {
+          method: "POST",
+          headers: { "Authorization": token }
+        });
+
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.detail || "Reservation failed");
+        }
+
+        showMessage(`${body.message || "Reservation created."} Total: $${Number(body.total_amount || 0).toFixed(2)}`);
+        await loadListings();
+      } catch (error) {
+        showMessage(error.message || "Reservation failed.", true);
+      }
+    }
 
     function togglePickup(id) {
-
-      const panel =
-        document.getElementById(id);
-
-      panel.classList.toggle("visible");
-
-    }
-
-
-
-    function getToken() {
-      return localStorage.getItem("session_token");
+      const panel = document.getElementById(id);
+      if (panel) {
+        panel.classList.toggle("visible");
+      }
     }
 
     async function loadUserName() {
@@ -742,6 +501,7 @@
     }
 
     loadUserName();
+    loadListings();
 
   </script>
 

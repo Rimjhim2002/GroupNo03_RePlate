@@ -55,8 +55,14 @@
   }
 
   .topbar-user {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--slate);
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
   }
 
   .back-link, .logout-btn, .nav-link {
@@ -369,7 +375,14 @@
       <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
       <a class="nav-link" href="/recommendations-view">Recommendations</a>
     </div>
-    <span class="topbar-user" id="userLabel"></span>
+    <button
+      id="userLabel"
+      class="topbar-user"
+      type="button"
+      onclick="window.location.href = '/'"
+    >
+      Welcome, User
+    </button>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
