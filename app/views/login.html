@@ -492,6 +492,26 @@ function goToListingsPage() {
     window.location.href = "/listings-view";
 }
 
+function addDashboardLink(parent, id, text, target, marginTop = "12px") {
+  const link = document.createElement("button");
+  link.id = id;
+  link.type = "button";
+  link.textContent = text;
+  link.onclick = () => window.location.href = target;
+  link.style.display = "block";
+  link.style.margin = `${marginTop} auto 0`;
+  link.style.color = "#1D4ED8";
+  link.style.fontWeight = "600";
+  link.style.fontSize = "14px";
+  link.style.background = "rgba(29, 78, 216, 0.08)";
+  link.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+  link.style.cursor = "pointer";
+  link.style.padding = "8px 12px";
+  link.style.borderRadius = "8px";
+  link.style.width = "fit-content";
+  parent.appendChild(link);
+}
+
 function showDashboard(user) {
     document.getElementById("authLayout").style.display = "none";
 
@@ -515,22 +535,6 @@ function showDashboard(user) {
         oldMarketplaceLink.remove();
     }
 
-    const marketplaceLink = document.createElement("button");
-    marketplaceLink.id = "marketplaceLink";
-    marketplaceLink.type = "button";
-    marketplaceLink.textContent = "Marketplace →";
-    marketplaceLink.onclick = () => window.location.href = "/marketplace";
-    marketplaceLink.style.marginTop = "16px";
-    marketplaceLink.style.display = "inline-block";
-    marketplaceLink.style.color = "#1D4ED8";
-    marketplaceLink.style.fontWeight = "600";
-    marketplaceLink.style.fontSize = "14px";
-    marketplaceLink.style.textDecoration = "none";
-    marketplaceLink.style.background = "transparent";
-    marketplaceLink.style.border = "none";
-    marketplaceLink.style.cursor = "pointer";
-    dashCard.appendChild(marketplaceLink);
-
     const oldManageLink =
         document.getElementById("manageListingsLink");
 
@@ -538,42 +542,161 @@ function showDashboard(user) {
         oldManageLink.remove();
     }
 
+    ["restaurantMarketplaceLink", "restaurantDonationsLink", "restaurantPickupLink", "restaurantRecommendationsLink"]
+      .forEach((id) => document.getElementById(id)?.remove());
+
     if (user.role === "restaurant") {
-
-        const link = document.createElement("button");
-
-        link.id = "manageListingsLink";
-        link.type = "button";
-        link.textContent = "Manage Listings →";
-        link.onclick = goToListingsPage;
-
-        link.style.marginTop = "16px";
-        link.style.display = "inline-block";
-        link.style.color = "#1D4ED8";
-        link.style.fontWeight = "600";
-        link.style.fontSize = "14px";
-        link.style.textDecoration = "none";
-        link.style.background = "transparent";
-        link.style.border = "none";
-        link.style.cursor = "pointer";
-
-        dashCard.appendChild(link);
+      addDashboardLink(dashCard, "manageListingsLink", "Manage Listings →", "/listings-view", "16px");
+      addDashboardLink(dashCard, "restaurantMarketplaceLink", "Marketplace →", "/marketplace");
+      addDashboardLink(dashCard, "restaurantDonationsLink", "NGO Donations →", "/ngo-donations-view");
+      addDashboardLink(dashCard, "restaurantPickupLink", "Pickup Slots →", "/pickup-slots-view");
+      addDashboardLink(dashCard, "restaurantRecommendationsLink", "Recommendations →", "/recommendations-view");
     }
 
+      if (user.role === "ngo") {
+        const marketplaceLink = document.createElement("button");
+        marketplaceLink.id = "marketplaceLink";
+        marketplaceLink.type = "button";
+        marketplaceLink.textContent = "Marketplace →";
+        marketplaceLink.onclick = () => window.location.href = "/marketplace";
+        marketplaceLink.style.display = "block";
+        marketplaceLink.style.margin = "16px auto 0";
+        marketplaceLink.style.color = "#1D4ED8";
+        marketplaceLink.style.fontWeight = "600";
+        marketplaceLink.style.fontSize = "14px";
+        marketplaceLink.style.textDecoration = "none";
+        marketplaceLink.style.background = "rgba(29, 78, 216, 0.08)";
+        marketplaceLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        marketplaceLink.style.cursor = "pointer";
+        marketplaceLink.style.padding = "8px 12px";
+        marketplaceLink.style.borderRadius = "8px";
+        marketplaceLink.style.width = "fit-content";
+        dashCard.appendChild(marketplaceLink);
+
+        const pickupLink = document.createElement("button");
+        pickupLink.type = "button";
+        pickupLink.textContent = "Pickup Slots →";
+        pickupLink.onclick = () => window.location.href = "/pickup-slots-view";
+        pickupLink.style.display = "block";
+        pickupLink.style.margin = "12px auto 0";
+        pickupLink.style.color = "#1D4ED8";
+        pickupLink.style.fontWeight = "600";
+        pickupLink.style.fontSize = "14px";
+        pickupLink.style.background = "rgba(29, 78, 216, 0.08)";
+        pickupLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        pickupLink.style.cursor = "pointer";
+        pickupLink.style.padding = "8px 12px";
+        pickupLink.style.borderRadius = "8px";
+        pickupLink.style.width = "fit-content";
+        dashCard.appendChild(pickupLink);
+
+        const recommendationLink = document.createElement("button");
+        recommendationLink.type = "button";
+        recommendationLink.textContent = "Recommendations →";
+        recommendationLink.onclick = () => window.location.href = "/recommendations-view";
+        recommendationLink.style.display = "block";
+        recommendationLink.style.margin = "12px auto 0";
+        recommendationLink.style.color = "#1D4ED8";
+        recommendationLink.style.fontWeight = "600";
+        recommendationLink.style.fontSize = "14px";
+        recommendationLink.style.background = "rgba(29, 78, 216, 0.08)";
+        recommendationLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        recommendationLink.style.cursor = "pointer";
+        recommendationLink.style.padding = "8px 12px";
+        recommendationLink.style.borderRadius = "8px";
+        recommendationLink.style.width = "fit-content";
+        dashCard.appendChild(recommendationLink);
+
+        const donationsLink = document.createElement("button");
+        donationsLink.type = "button";
+        donationsLink.textContent = "NGO Donations →";
+        donationsLink.onclick = () => window.location.href = "/ngo-donations-view";
+        donationsLink.style.display = "block";
+        donationsLink.style.margin = "12px auto 0";
+        donationsLink.style.color = "#1D4ED8";
+        donationsLink.style.fontWeight = "600";
+        donationsLink.style.fontSize = "14px";
+        donationsLink.style.background = "rgba(29, 78, 216, 0.08)";
+        donationsLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        donationsLink.style.cursor = "pointer";
+        donationsLink.style.padding = "8px 12px";
+        donationsLink.style.borderRadius = "8px";
+        donationsLink.style.width = "fit-content";
+        dashCard.appendChild(donationsLink);
+      }
+
     if (user.role === "consumer") {
-        let discoveryLink = document.getElementById("consumerDiscoveryLink");
-        if (!discoveryLink) {
-            discoveryLink = document.createElement("a");
-            discoveryLink.id = "consumerDiscoveryLink";
-            discoveryLink.href = "/consumer-search";
-            discoveryLink.textContent = "Nearby Food Discovery";
-            discoveryLink.style.marginTop = "8px";
-            discoveryLink.style.display = "inline-block";
-            discoveryLink.style.color = "#14532D";
-            discoveryLink.style.fontWeight = "700";
-            discoveryLink.style.textDecoration = "none";
-            dashCard.appendChild(discoveryLink);
-        }
+        const nearbyLink = document.createElement("button");
+        nearbyLink.type = "button";
+        nearbyLink.textContent = "Nearby Food →";
+        nearbyLink.onclick = () => window.location.href = "/consumer-search";
+        nearbyLink.style.display = "block";
+        nearbyLink.style.margin = "16px auto 0";
+        nearbyLink.style.color = "#1D4ED8";
+        nearbyLink.style.fontWeight = "600";
+        nearbyLink.style.fontSize = "14px";
+        nearbyLink.style.textDecoration = "none";
+        nearbyLink.style.background = "rgba(29, 78, 216, 0.08)";
+        nearbyLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        nearbyLink.style.cursor = "pointer";
+        nearbyLink.style.padding = "8px 12px";
+        nearbyLink.style.borderRadius = "8px";
+        nearbyLink.style.width = "fit-content";
+        dashCard.appendChild(nearbyLink);
+
+        const pickupLink = document.createElement("button");
+        pickupLink.type = "button";
+        pickupLink.textContent = "Pickup Slots →";
+        pickupLink.onclick = () => window.location.href = "/pickup-slots-view";
+        pickupLink.style.display = "block";
+        pickupLink.style.margin = "12px auto 0";
+        pickupLink.style.color = "#1D4ED8";
+        pickupLink.style.fontWeight = "600";
+        pickupLink.style.fontSize = "14px";
+        pickupLink.style.textDecoration = "none";
+        pickupLink.style.background = "rgba(29, 78, 216, 0.08)";
+        pickupLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        pickupLink.style.cursor = "pointer";
+        pickupLink.style.padding = "8px 12px";
+        pickupLink.style.borderRadius = "8px";
+        pickupLink.style.width = "fit-content";
+        dashCard.appendChild(pickupLink);
+
+        const historyLink = document.createElement("button");
+        historyLink.type = "button";
+        historyLink.textContent = "Transaction History →";
+        historyLink.onclick = () => window.location.href = "/consumer-history";
+        historyLink.style.display = "block";
+        historyLink.style.margin = "12px auto 0";
+        historyLink.style.color = "#1D4ED8";
+        historyLink.style.fontWeight = "600";
+        historyLink.style.fontSize = "14px";
+        historyLink.style.textDecoration = "none";
+        historyLink.style.background = "rgba(29, 78, 216, 0.08)";
+        historyLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        historyLink.style.cursor = "pointer";
+        historyLink.style.padding = "8px 12px";
+        historyLink.style.borderRadius = "8px";
+        historyLink.style.width = "fit-content";
+        dashCard.appendChild(historyLink);
+
+        const recommendationLink = document.createElement("button");
+        recommendationLink.type = "button";
+        recommendationLink.textContent = "Recommendations →";
+        recommendationLink.onclick = () => window.location.href = "/recommendations-view";
+        recommendationLink.style.display = "block";
+        recommendationLink.style.margin = "12px auto 0";
+        recommendationLink.style.color = "#1D4ED8";
+        recommendationLink.style.fontWeight = "600";
+        recommendationLink.style.fontSize = "14px";
+        recommendationLink.style.textDecoration = "none";
+        recommendationLink.style.background = "rgba(29, 78, 216, 0.08)";
+        recommendationLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
+        recommendationLink.style.cursor = "pointer";
+        recommendationLink.style.padding = "8px 12px";
+        recommendationLink.style.borderRadius = "8px";
+        recommendationLink.style.width = "fit-content";
+        dashCard.appendChild(recommendationLink);
     }
 }
 

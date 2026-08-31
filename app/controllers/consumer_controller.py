@@ -153,11 +153,18 @@ async def search_consumer_listings(
 
     response = []
     for listing in filtered:
-        restaurant = await listing.restaurant.fetch() if hasattr(listing, "restaurant") else None
+        restaurant = None
+        restaurant_id = None
+        if getattr(listing, "restaurant", None):
+            restaurant_id = str(listing.restaurant.ref.id)
+            try:
+                restaurant = await listing.restaurant.fetch()
+            except Exception:
+                restaurant = None
         response.append(
             {
                 "id": str(listing.id),
-                "restaurant_id": str(listing.restaurant.ref.id) if getattr(listing, "restaurant", None) else None,
+                "restaurant_id": restaurant_id,
                 "restaurant_name": getattr(restaurant, "business_name", None) or getattr(restaurant, "name", None),
                 "food_name": listing.food_name,
                 "description": listing.description,

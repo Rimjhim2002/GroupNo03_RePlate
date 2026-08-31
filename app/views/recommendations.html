@@ -87,9 +87,11 @@
   <div class="brand-mark">RePlate<span>.</span></div>
   <div class="topbar-right">
     <div class="nav-links">
+      <a class="nav-link" href="/listings-view">Food Listings</a>
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/listings-view">Listings</a>
       <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
+      <a class="nav-link" href="/consumer-search">Nearby Food</a>
+      <a class="nav-link" href="/consumer-history">Transaction History</a>
       <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
     </div>
     <button
@@ -127,6 +129,32 @@
  
   function getToken() {
     return localStorage.getItem("session_token");
+  }
+
+  async function applyRoleNavAccess() {
+    try {
+      const token = getToken();
+      if (!token) return;
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) return;
+      const user = await res.json();
+      const allowed = {
+        restaurant: ["/listings-view", "/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
+        ngo: ["/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
+        consumer: ["/consumer-search", "/consumer-history", "/pickup-slots-view", "/recommendations-view"],
+      };
+      const links = document.querySelectorAll(".nav-link");
+      links.forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href || !allowed[user.role] || allowed[user.role].includes(href)) {
+          link.style.display = "inline-block";
+          return;
+        }
+        link.style.display = "none";
+      });
+    } catch (err) {
+      // ignore and keep default nav visible
+    }
   }
  
   async function guardPage() {
@@ -224,6 +252,7 @@
     }
   }
  
+  applyRoleNavAccess();
   guardPage();
 </script>
  

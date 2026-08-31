@@ -4,12 +4,17 @@ from app.controllers.food_listing_controller import (
 )
 from app.models.enums import ListingApprovalStatus, ListingStatus
 from app.models.food_listing import FoodListing
-from app.models.transaction import Transaction
+from app.models.transaction import Transaction, TransactionStatus, TransactionType
 from app.models.user import User, VerificationStatus
 async def get_restaurant_dashboard(user: User) -> dict:
     listings = await FoodListing.find(FoodListing.restaurant.id == user.id).to_list()
     transactions = await Transaction.find_all().to_list()
-    restaurant_transactions = [t for t in transactions if t.food_listing.ref.restaurant.ref.id == user.id]
+    restaurant_listing_ids = {listing.id for listing in listings}
+    restaurant_transactions = [
+        transaction
+        for transaction in transactions
+        if transaction.food_listing.ref.id in restaurant_listing_ids
+    ]
     return {
         "user_id": str(user.id),
         "business_name": user.business_name,
@@ -22,22 +27,35 @@ async def get_restaurant_dashboard(user: User) -> dict:
     }
 
 async def get_consumer_dashboard(user: User) -> dict:
+    transactions = await Transaction.find(
+        Transaction.claimed_by.id == user.id,
+        Transaction.type == TransactionType.SALE,
+    ).to_list()
+    active_transactions = [transaction for transaction in transactions if transaction.status == TransactionStatus.RESERVED]
+    completed_transactions = [transaction for transaction in transactions if transaction.status == TransactionStatus.COMPLETED]
     return {
         "user_id": str(user.id),
-        "active_reservations":0,
-        "completed_transactions":0,
-        "meals_received":0,
-        "money_saved": 0.0
+        "active_reservations": len(active_transactions),
+        "completed_transactions": len(completed_transactions),
+        "meals_received": sum(transaction.quantity for transaction in completed_transactions),
+        "money_saved": round(sum(float(transaction.total_amount) for transaction in completed_transactions), 2),
     }
 
 async def get_ngo_dashboard(user: User) -> dict:
+    transactions = await Transaction.find(
+        Transaction.claimed_by.id == user.id,
+        Transaction.type == TransactionType.DONATION,
+    ).to_list()
+    active_statuses = {TransactionStatus.RESERVED, TransactionStatus.CONFIRMED}
+    active_transactions = [transaction for transaction in transactions if transaction.status in active_statuses]
+    completed_transactions = [transaction for transaction in transactions if transaction.status == TransactionStatus.COMPLETED]
     return {
         "user_id":str(user.id),
         "organization_name":user.organization_name,
-        "active_reservations": 0,
-        "completed_transactions":0,
-        "meals_claimed":0,
-        "donations_fulfilled":0
+        "active_reservations": len(active_transactions),
+        "completed_transactions": len(completed_transactions),
+        "meals_claimed": sum(transaction.quantity for transaction in transactions),
+        "donations_fulfilled": sum(transaction.quantity for transaction in completed_transactions),
     }
 
 async def get_admin_dashboard(user: User) -> dict:

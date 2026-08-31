@@ -98,9 +98,11 @@
   <div class="brand-mark">RePlate<span>.</span></div>
   <div class="topbar-right">
     <div class="nav-links">
+      <a class="nav-link" href="/listings-view">Food Listings</a>
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/listings-view">Listings</a>
       <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
+      <a class="nav-link" href="/consumer-search">Nearby Food</a>
+      <a class="nav-link" href="/consumer-history">Transaction History</a>
       <a class="nav-link" href="/recommendations-view">Recommendations</a>
     </div>
     <button
@@ -131,7 +133,7 @@
         <option value="">Loading your listings…</option>
       </select>
     </div>
- 
+
     <div class="field-row">
       <div class="field">
         <label>Start time</label>
@@ -144,9 +146,11 @@
     </div>
  
     <div class="field">
-      <label>Capacity (how many people can pick up in this window)</label>
+      <label>Capacity</label>
       <input type="number" id="slotCapacity" min="1" placeholder="5" />
     </div>
+
+    <button class="submit-btn" id="searchSlotBtn" type="button" onclick="searchPickupSlot()">Confirm Pickup Slot</button>
  
     <button class="submit-btn" id="addSlotBtn" onclick="handleAddSlot()">Add pickup slot</button>
   </div>
@@ -160,6 +164,32 @@
   function getToken() {
     return localStorage.getItem("session_token");
   }
+
+  async function applyRoleNavAccess() {
+    try {
+      const token = getToken();
+      if (!token) return;
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) return;
+      const user = await res.json();
+      const allowed = {
+        restaurant: ["/listings-view", "/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
+        ngo: ["/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
+        consumer: ["/consumer-search", "/consumer-history", "/pickup-slots-view", "/recommendations-view"],
+      };
+      const links = document.querySelectorAll(".nav-link");
+      links.forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href || !allowed[user.role] || allowed[user.role].includes(href)) {
+          link.style.display = "inline-block";
+          return;
+        }
+        link.style.display = "none";
+      });
+    } catch (err) {
+      // ignore and keep default nav visible
+    }
+  }
  
   async function guardPage() {
     const token = getToken();
@@ -168,9 +198,16 @@
       const res = await fetch("/auth/me", { headers: { "Authorization": token } });
       if (!res.ok) { window.location.href = "/"; return; }
       const user = await res.json();
+      window.currentUserRole = user.role;
+      if (user.role === "administrator") { window.location.href = "/"; return; }
       const displayName = user.business_name || user.organization_name || user.name || "User";
       document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
-      loadMyListings();
+      if (user.role === "restaurant") {
+        loadMyListings();
+      } else {
+        document.getElementById("addSlotBtn").style.display = "none";
+        loadAvailableListings();
+      }
     } catch (err) {
       window.location.href = "/";
     }
@@ -201,6 +238,12 @@
     document.getElementById("errorMsg").classList.remove("visible");
     document.getElementById("successMsg").classList.remove("visible");
   }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
  
   async function loadMyListings() {
     const select = document.getElementById("listingSelect");
@@ -219,10 +262,62 @@
       select.innerHTML = '<option value="">Could not load listings</option>';
     }
   }
+
+  async function loadAvailableListings() {
+    const select = document.getElementById("listingSelect");
+    try {
+      const res = await fetch("/listings/available", { headers: { "Authorization": getToken() } });
+      const listings = await res.json();
+
+      if (!res.ok || listings.length === 0) {
+        select.innerHTML = '<option value="">No available listings yet</option>';
+        return;
+      }
+
+      select.innerHTML = listings.map((listing) =>
+        `<option value="${listing.id}">${listing.food_name} (${listing.listing_type})</option>`
+      ).join("");
+      loadAllAvailableSlots(listings);
+    } catch (err) {
+      select.innerHTML = '<option value="">Could not load listings</option>';
+    }
+  }
+
+  async function loadAllAvailableSlots(listings) {
+    const container = document.getElementById("slotsContainer");
+    container.innerHTML = "Loading pickup slots…";
+    const listingResults = await Promise.all(listings.map(async (listing) => {
+      try {
+        const res = await fetch(`/api/lifecycle/listings/${listing.id}/pickup-slots`, {
+          headers: { "Authorization": getToken() },
+        });
+        const slots = res.ok ? await res.json() : [];
+        return { listing, slots };
+      } catch (err) {
+        return { listing, slots: [] };
+      }
+    }));
+
+    container.innerHTML = `<div class="slot-list">${listingResults.map(({ listing, slots }) => `
+      <div class="slot-row">
+        <span><strong>${escapeHtml(listing.food_name)}</strong><br>${escapeHtml(listing.pickup_location || "Pickup location available")}</span>
+        <span class="slot-capacity">${slots.length ? `${slots.length} pickup slot(s) available` : "Pickup time not available yet"}</span>
+      </div>
+    `).join("")}</div>`;
+  }
  
   function onListingChange() {
     const listingId = document.getElementById("listingSelect").value;
     if (listingId) loadSlots(listingId);
+  }
+
+  function searchPickupSlot() {
+    const listingId = document.getElementById("listingSelect").value;
+    if (!listingId) {
+      showError("Select a listing first.");
+      return;
+    }
+    loadSlots(listingId);
   }
  
   // --- Pickup Time Slot Management ---
@@ -299,6 +394,7 @@
     }
   }
  
+  applyRoleNavAccess();
   guardPage();
 </script>
  

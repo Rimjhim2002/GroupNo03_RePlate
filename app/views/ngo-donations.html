@@ -92,8 +92,8 @@
   <div class="brand-mark">RePlate<span>.</span></div>
   <div class="topbar-right">
     <div class="nav-links">
+      <a class="nav-link" href="/listings-view">Food Listings</a>
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/listings-view">Listings</a>
       <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
       <a class="nav-link" href="/recommendations-view">Recommendations</a>
     </div>
@@ -126,6 +126,32 @@
   function getToken() {
     return localStorage.getItem("session_token");
   }
+
+  async function applyRoleNavAccess() {
+    try {
+      const token = getToken();
+      if (!token) return;
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) return;
+      const user = await res.json();
+      const allowed = {
+        restaurant: ["/listings-view", "/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
+        ngo: ["/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
+        consumer: ["/consumer-search", "/consumer-history", "/pickup-slots-view", "/recommendations-view"],
+      };
+      const links = document.querySelectorAll(".nav-link");
+      links.forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href || !allowed[user.role] || allowed[user.role].includes(href)) {
+          link.style.display = "inline-block";
+          return;
+        }
+        link.style.display = "none";
+      });
+    } catch (err) {
+      // ignore and keep default nav visible
+    }
+  }
  
   async function guardPage() {
     const token = getToken();
@@ -134,9 +160,13 @@
       const res = await fetch("/auth/me", { headers: { "Authorization": token } });
       if (!res.ok) { window.location.href = "/"; return; }
       const user = await res.json();
-      if (user.role !== "ngo") { window.location.href = "/"; return; }
-      const displayName = user.organization_name || user.name || "User";
+      window.currentUserRole = user.role;
+      if (!['ngo', 'restaurant'].includes(user.role)) { window.location.href = "/"; return; }
+      const displayName = user.organization_name || user.business_name || user.name || "User";
       document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
+      if (user.role !== "ngo") {
+        showError("You are viewing donation listings in read-only mode. Only verified NGOs can claim them.");
+      }
       loadDonations();
     } catch (err) {
       window.location.href = "/";
@@ -188,6 +218,8 @@
   }
  
   function renderCard(listing) {
+    const listingId = listing.id || listing._id;
+    const isNgo = window.currentUserRole === "ngo";
     return `
       <div class="listing-card">
         <div class="listing-card-top">
@@ -199,19 +231,27 @@
           <span class="badge">${listing.available_quantity} ${escapeHtml(listing.unit)} left</span>
         </div>
         <div class="claim-row">
-          <input type="number" min="1" max="${listing.available_quantity}" value="1" id="qty-${listing.id}" />
-          <button class="claim-btn" id="claim-btn-${listing.id}" onclick="handleClaim('${listing.id}')">Claim for donation</button>
+          <input type="number" min="1" max="${listing.available_quantity}" value="1" id="qty-${listingId}" ${isNgo ? "" : "disabled"} />
+          <button class="claim-btn" id="claim-btn-${listingId}" onclick="handleClaim('${listingId}')" ${isNgo ? "" : "disabled"}>
+            ${isNgo ? "Claim for donation" : "NGO access only"}
+          </button>
         </div>
       </div>
     `;
   }
- 
+
   async function handleClaim(listingId) {
     hideError();
     const btn = document.getElementById(`claim-btn-${listingId}`);
     const qtyInput = document.getElementById(`qty-${listingId}`);
+    if (!btn || !qtyInput) return;
+    if (window.currentUserRole !== "ngo") {
+      showError("Only verified NGOs can claim donations.");
+      return;
+    }
+
     const quantity = parseInt(qtyInput.value, 10) || 1;
- 
+
     btn.disabled = true;
     btn.textContent = "Claiming…";
  
@@ -237,6 +277,7 @@
     }
   }
  
+  applyRoleNavAccess();
   guardPage();
 </script>
  

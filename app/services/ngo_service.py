@@ -5,7 +5,7 @@ from app.models.food_listing import FoodListing, ListingApprovalStatus, ListingS
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 
 
-async def browse_available_donations() -> list[FoodListing]:
+async def browse_available_donations() -> list[dict]:
     """NGOs browse listings that are still available, soonest-to-expire first.
     TODO: add a geo/distance filter once location-based query support is added."""
     listings = await FoodListing.find(
@@ -13,7 +13,17 @@ async def browse_available_donations() -> list[FoodListing]:
         FoodListing.approval_status == ListingApprovalStatus.APPROVED,
         FoodListing.listing_type == ListingType.DONATION,
     ).sort(+FoodListing.expiry_date).to_list()
-    return listings
+    return [
+        {
+            "id": str(listing.id),
+            "food_name": listing.food_name,
+            "description": listing.description,
+            "pickup_location": listing.pickup_location,
+            "available_quantity": listing.available_quantity,
+            "unit": listing.unit,
+        }
+        for listing in listings
+    ]
 
 
 async def claim_donation(ngo: User, food_listing_id: str, quantity: int) -> Transaction:
