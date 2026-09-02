@@ -14,7 +14,7 @@ from app.schemas.food_listing_schema import (
     FoodListingStatusUpdate,
 )
 
-
+from app.controllers.notification_controller import notify_nearby_users_of_new_listing
 def _to_food_listing_read(listing: FoodListing, restaurant_id: str) -> FoodListingRead:
     discounted_price = listing.original_price * (1 - listing.discount_percentage / 100)
     return FoodListingRead(
@@ -39,33 +39,14 @@ def _to_food_listing_read(listing: FoodListing, restaurant_id: str) -> FoodListi
 
 
 async def create_listing(data: FoodListingCreate, restaurant: User) -> FoodListingRead:
-    duplicate = await FoodListing.find_one(
-        FoodListing.restaurant.id == restaurant.id,
-        FoodListing.food_name == data.food_name,
-        FoodListing.category == data.category,
-        FoodListing.quantity == data.quantity,
-        FoodListing.unit == data.unit,
-        FoodListing.original_price == data.original_price,
-        FoodListing.expiry_date == data.expiry_date,
-        Or(
-            FoodListing.status == ListingStatus.AVAILABLE,
-            FoodListing.status == ListingStatus.RESERVED,
-        ),
-    )
-    if duplicate:
-        await Notification(
-            recipient=restaurant,
-            title="Duplicate food listing detected",
-            type=NotificationType.DUPLICATE_LISTING,
-            message=(
-                f"A matching active listing for '{data.food_name}' already exists. "
-                "The new listing was not published."
-            ),
-        ).insert()
+    if restaurant.verification_status != VerificationStatus.VERIFIED:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A matching active listing already exists for this restaurant.",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your restaurant account must be verified before creating listings.",
         )
+
+    listing_latitude = data.latitude if data.latitude is not None else restaurant.latitude
+    listing_longitude = data.longitude if data.longitude is not None else restaurant.longitude
 
     listing = FoodListing(
         restaurant=restaurant,
@@ -80,11 +61,13 @@ async def create_listing(data: FoodListingCreate, restaurant: User) -> FoodListi
         discount_percentage=data.discount_percentage,
         expiry_date=data.expiry_date,
         pickup_location=data.pickup_location,
-        latitude=data.latitude,
-        longitude=data.longitude,
+        latitude=listing_latitude,
+        longitude=listing_longitude,
         status=ListingStatus.AVAILABLE,
     )
     await listing.insert()
+
+    await notify_nearby_users_of_new_listing(listing, restaurant)
 
     return _to_food_listing_read(listing, str(restaurant.id))
 async def list_my_listings(restaurant: User) -> list[FoodListingRead]:

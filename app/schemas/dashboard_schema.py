@@ -1,14 +1,17 @@
 from typing import Optional
 from pydantic import BaseModel
 class RestaurantDashboardResponse(BaseModel):
-    user_id:str
-    business_name:Optional[str] =None
-    active_listings:int
-    active_reservations:int
-    completed_transactions:int
-    revenue_recovered:float
-    waste_value_avoided:float
-    meals_donated:int
+    user_id: str
+    business_name: Optional[str] = None
+    active_listings: int
+    active_reservations: int
+    completed_transactions: int
+    food_saved_count: int = 0
+    meals_donated: int = 0
+    revenue_recovered: float = 0.0
+    waste_reduced_percentage: float = 0.0
+    waste_value_avoided: float = 0.0
+    total_food_listed: int = 0
 class ConsumerDashboardResponse(BaseModel):
     user_id:str
     active_reservations:int

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RePlate — Food Waste Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #F7F9FC;
+    --navy: #0B2545;
+    --blue: #1D4ED8;
+    --green: #10B981;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --slate: #8DA9C4;
+    --white: #FFFFFF;
+    --card-border: #E4E9F2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--navy);
+    color: var(--white);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand-mark {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+  }
+  .brand-mark span { color: var(--slate); }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .topbar-user {
+    font-size: 13px;
+    color: var(--slate);
+  }
+
+  .nav-btn, .logout-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    color: var(--white);
+    padding: 7px 16px;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    display: inline-block;
+  }
+  .nav-btn:hover, .logout-btn:hover {
+    border-color: var(--white);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 36px 32px 80px;
+  }
+
+  .page-header {
+    margin-bottom: 28px;
+  }
+
+  .page-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .page-header p {
+    color: #5A7189;
+    font-size: 14.5px;
+    margin-top: 6px;
+  }
+
+  /* Summary Metrics Row */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(11,37,69,0.02);
+  }
+
+  .metric-card-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5A7189;
+    margin-bottom: 8px;
+  }
+
+  .metric-card-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.1;
+  }
+
+  .metric-card-sub {
+    font-size: 12px;
+    color: #8DA9C4;
+    margin-top: 6px;
+  }
+
+  /* Charts Row */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .chart-card {
+    background: var(--white);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(11,37,69,0.02);
+  }
+
+  .chart-card h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--navy);
+  }
+
+  .chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 260px;
+  }
+
+  /* Insights & Categories Section */
+  .lower-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .lower-grid { grid-template-columns: 1fr; }
+  }
+
+  .table-card, .insights-card {
+    background: var(--white);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(11,37,69,0.02);
+  }
+
+  .table-card h2, .insights-card h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    color: #5A7189;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 1.5px solid #EEF2F8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #F1F4F9;
+    color: var(--navy);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-green { background: #E6F8F0; color: #065F46; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+  .badge-red { background: #FEE2E2; color: #991B1B; }
+
+  .insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .insight-item {
+    background: #F8FAFD;
+    border-left: 3px solid var(--blue);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand-mark">RePlate<span>.</span></div>
+  <div class="topbar-right">
+    <span class="topbar-user" id="userLabel"></span>
+    <a class="nav-btn" href="/">Dashboard</a>
+    <a class="nav-btn" href="/listings-view">Listings</a>
+    <a class="nav-btn" href="/notifications-view">🔔 Notifications</a>
+    <button class="logout-btn" onclick="handleLogout()">Log out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <h1>📊 Food Waste Analytics</h1>
+    <p>Data-driven insights on surplus food distribution, donation conversion, and waste reduction.</p>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-card-title">Overall Rescue Rate</div>
+      <div class="metric-card-value" id="overallRescueRate">0%</div>
+      <div class="metric-card-sub" id="rescueRateSub">Rescued vs. Total Surplus</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-title">Food Rescued</div>
+      <div class="metric-card-value" id="totalRescued">0</div>
+      <div class="metric-card-sub">Units diverted from landfills</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-title">Revenue Recovered</div>
+      <div class="metric-card-value" id="totalRevenue">$0.00</div>
+      <div class="metric-card-sub">From surplus discount sales</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-title">CO₂e Avoided</div>
+      <div class="metric-card-value" id="co2Avoided">0 kg</div>
+      <div class="metric-card-sub">Greenhouse gas reduction</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2>Surplus by Category</h2>
+      <div class="chart-container">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Rescue & Waste Trends</h2>
+      <div class="chart-container">
+        <canvas id="trendsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lower Row: Table + Actionable Insights -->
+  <div class="lower-grid">
+    <div class="table-card">
+      <h2>Category Performance Breakdown</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Listed</th>
+            <th>Rescued</th>
+            <th>Wasted</th>
+            <th>Rescue Rate</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody id="categoryTableBody">
+          <tr><td colspan="6" style="text-align:center; color:#8DA9C4;">Loading analytics data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="insights-card">
+      <h2>💡 Actionable Insights</h2>
+      <div class="insights-list" id="insightsList">
+        <div class="insight-item">Analyzing surplus data to generate operational recommendations...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let categoryChartInstance = null;
+  let trendsChartInstance = null;
+
+  function getToken() {
+    return localStorage.getItem("session_token");
+  }
+
+  async function guardPage() {
+    const token = getToken();
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+    try {
+      const res = await fetch("/auth/me", { headers: { "Authorization": token } });
+      if (!res.ok) {
+        window.location.href = "/";
+        return;
+      }
+      const user = await res.json();
+      if (user.role !== "restaurant") {
+        window.location.href = "/";
+        return;
+      }
+      document.getElementById("userLabel").textContent = user.business_name || user.name;
+      loadAnalytics();
+    } catch (err) {
+      window.location.href = "/";
+    }
+  }
+
+  async function handleLogout() {
+    const token = getToken();
+    if (token) {
+      try {
+        await fetch("/auth/logout", { method: "POST", headers: { "Authorization": token } });
+      } catch (err) {}
+    }
+    localStorage.removeItem("session_token");
+    window.location.href = "/";
+  }
+
+  async function loadAnalytics() {
+    try {
+      const res = await fetch("/analytics/restaurant", {
+        headers: { "Authorization": getToken() }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      renderDashboard(data);
+    } catch (err) {
+      console.error("Failed to load analytics:", err);
+    }
+  }
+
+  function renderDashboard(data) {
+    const { summary, categories, trends, insights } = data;
+
+    // Summary Cards
+    document.getElementById("overallRescueRate").textContent = `${summary.overall_rescue_rate}%`;
+    document.getElementById("totalRescued").textContent = `${summary.total_rescued_units} units`;
+    document.getElementById("totalRevenue").textContent = `$${summary.total_revenue_recovered.toFixed(2)}`;
+    document.getElementById("co2Avoided").textContent = `${summary.co2_avoided_kg} kg`;
+
+    // Category Table
+    const tbody = document.getElementById("categoryTableBody");
+    if (!categories || categories.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#8DA9C4;">No category data available yet.</td></tr>';
+    } else {
+      tbody.innerHTML = categories.map(c => {
+        let badgeClass = "badge-green";
+        if (c.rescue_rate_percentage < 50) badgeClass = "badge-red";
+        else if (c.rescue_rate_percentage < 75) badgeClass = "badge-amber";
+
+        return `
+          <tr>
+            <td><strong>${escapeHtml(c.category)}</strong></td>
+            <td>${c.total_listed}</td>
+            <td>${c.rescued_units}</td>
+            <td>${c.wasted_units}</td>
+            <td><span class="badge ${badgeClass}">${c.rescue_rate_percentage}%</span></td>
+            <td>$${c.revenue_recovered.toFixed(2)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // Actionable Insights
+    const insList = document.getElementById("insightsList");
+    if (!insights || insights.length === 0) {
+      insList.innerHTML = '<div class="insight-item">No specific recommendations yet. Keep listing surplus food to build analytics.</div>';
+    } else {
+      insList.innerHTML = insights.map(txt => `<div class="insight-item">${escapeHtml(txt)}</div>`).join("");
+    }
+
+    // Render Charts
+    renderCategoryChart(categories);
+    renderTrendsChart(trends);
+  }
+
+  function renderCategoryChart(categories) {
+    const ctx = document.getElementById("categoryChart").getContext("2d");
+    if (categoryChartInstance) categoryChartInstance.destroy();
+
+    const labels = (categories && categories.length) ? categories.map(c => c.category) : ["No Data"];
+    const values = (categories && categories.length) ? categories.map(c => c.total_listed) : [1];
+
+    const colors = [
+      "#1D4ED8", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#64748B"
+    ];
+
+    categoryChartInstance = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.slice(0, labels.length),
+          borderWidth: 2,
+          borderColor: "#FFFFFF",
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" }
+        }
+      }
+    });
+  }
+
+  function renderTrendsChart(trends) {
+    const ctx = document.getElementById("trendsChart").getContext("2d");
+    if (trendsChartInstance) trendsChartInstance.destroy();
+
+    const labels = (trends && trends.length) ? trends.map(t => t.period_label) : ["Current"];
+    const saleUnits = (trends && trends.length) ? trends.map(t => t.sale_units) : [0];
+    const donationUnits = (trends && trends.length) ? trends.map(t => t.donation_units) : [0];
+    const expiredUnits = (trends && trends.length) ? trends.map(t => t.expired_units) : [0];
+
+    trendsChartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Discount Sales (Units)",
+            data: saleUnits,
+            backgroundColor: "#1D4ED8",
+            borderRadius: 6,
+          },
+          {
+            label: "NGO Donations (Units)",
+            data: donationUnits,
+            backgroundColor: "#10B981",
+            borderRadius: 6,
+          },
+          {
+            label: "Expired / Wasted (Units)",
+            data: expiredUnits,
+            backgroundColor: "#EF4444",
+            borderRadius: 6,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, beginAtZero: true }
+        },
+        plugins: {
+          legend: { position: "bottom" }
+        }
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  guardPage();
+</script>
+
+</body>
+</html>

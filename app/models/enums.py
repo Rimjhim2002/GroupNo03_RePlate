@@ -32,6 +32,7 @@ class TransactionStatus(str,Enum):
 
 
 class NotificationType(str,Enum):
+    NEW_LISTING_NEARBY = "new_listing_nearby"
     DONATION_AVAILABLE ="donation_available"
     WAITLIST_NEXT ="waitlist_next"
     RATING_RECEIVED ="rating_received"

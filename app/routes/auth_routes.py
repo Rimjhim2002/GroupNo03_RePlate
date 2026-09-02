@@ -3,6 +3,8 @@ from app.controllers import auth_controller
 from app.core.dependencies import get_current_user,session_scheme
 from app.models.user import User
 from app.schemas.user_schema import SessionResponse, UserLogin, UserRead, UserRegister
+from app.controllers import auth_controller, user_controller
+from app.schemas.user_schema import LocationUpdate
 router =APIRouter(prefix="/auth",tags=["auth"])
 @router.post("/register",response_model=SessionResponse)
 async def register(data:UserRegister):
@@ -29,3 +31,9 @@ async def get_me(current_user: User =Depends(get_current_user)):
         business_name=current_user.business_name,
         organization_name=current_user.organization_name,
     )
+@router.patch("/me/location", response_model=UserRead)
+async def update_my_location(
+    data: LocationUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    return await user_controller.update_location(current_user, data)

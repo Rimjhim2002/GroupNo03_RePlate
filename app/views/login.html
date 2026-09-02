@@ -237,9 +237,92 @@
     border: 1px solid #D8E4F3;
     border-top: 4px solid var(--blue);
     border-radius: 16px;
-    padding: 40px 48px;
+    padding: 36px 40px;
     text-align: center;
     box-shadow: 0 4px 24px rgba(11,37,69,0.06);
+    max-width: 860px;
+    width: 92%;
+    margin: 20px auto;
+  }
+
+  .dash-actions-section {
+    margin-top: 30px;
+    border-top: 1.5px solid #EEF2F8;
+    padding-top: 22px;
+    text-align: left;
+  }
+
+  .dash-actions-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5A7189;
+    margin-bottom: 14px;
+  }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .action-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    background: #F8FAFD;
+    border: 1.5px solid #E4E9F2;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--navy);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.15s ease;
+  }
+
+  .action-card:hover {
+    border-color: var(--blue);
+    background: #F0F5FF;
+    transform: translateY(-1px);
+  }
+
+  .action-card-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+  }
+
+  .action-card-desc {
+    font-size: 12px;
+    color: #5A7189;
+  }
+
+  .location-box {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px dashed #E4E9F2;
+    text-align: center;
+  }
+
+  .loc-btn {
+    background: transparent;
+    border: 1.5px solid #8DA9C4;
+    color: var(--navy);
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .loc-btn:hover {
+    border-color: var(--navy);
+    background: #EEF2F8;
   }
 
   .dash-eyebrow {
@@ -445,6 +528,17 @@
     <div class="dash-title" id="dashTitle">Dashboard</div>
     <div class="dash-sub" id="dashSub">Logged in successfully.</div>
     <div class="dash-metrics" id="dashMetrics"></div>
+
+    <div class="dash-actions-section" id="dashActionsSection">
+      <div class="dash-actions-title">Platform Features & Navigation</div>
+      <div class="action-grid" id="actionGrid"></div>
+    </div>
+
+    <div class="location-box" id="locationBox">
+      <button class="loc-btn" id="setLocationBtn" type="button" onclick="handleSetLocation()">📍 Update My Location</button>
+      <div id="locationStatus" style="font-size: 12px; color: #5A7189; margin-top: 6px;"></div>
+    </div>
+
     <div class="admin-review" id="adminReview" style="display:none">
       <h3>Listings awaiting verification</h3>
       <button class="review-link" type="button" onclick="openReview('pending_verifications')">Review pending verifications</button>
@@ -462,6 +556,38 @@
     consumer: "Consumer Dashboard",
     ngo: "NGO Dashboard",
     administrator: "Administrator Dashboard",
+  };
+
+  const ROLE_ACTIONS = {
+    restaurant: [
+      { title: "📋 Manage Listings", desc: "Create, discount, and manage your surplus food", href: "/listings-view" },
+      { title: "📊 Food Waste Analytics", desc: "View surplus distribution, trends & insights", href: "/analytics-view" },
+      { title: "📄 Impact Reports", desc: "Generate monthly impact reports & audit CSV", href: "/reports-view" },
+      { title: "⭐ Ratings & Feedback", desc: "View customer & NGO reviews and scores", href: "/ratings-view" },
+      { title: "⏰ Pickup Slots", desc: "Set and manage pickup windows for orders", href: "/pickup-slots-view" },
+      { title: "💡 Smart Recommendations", desc: "Dynamic pricing & donation suggestions", href: "/recommendations-view" },
+      { title: "🛒 Marketplace", desc: "Browse all live surplus food listings", href: "/marketplace" },
+      { title: "🔔 Notifications", desc: "Real-time alerts, confirmations & reminders", href: "/notifications-view" },
+    ],
+    consumer: [
+      { title: "🔍 Nearby Food Discovery", desc: "Search discounted surplus food by radius", href: "/consumer-search" },
+      { title: "🛒 Marketplace", desc: "Browse and reserve surplus food items", href: "/marketplace" },
+      { title: "📜 Order & History", desc: "Track past reservations and total savings", href: "/consumer-history" },
+      { title: "⭐ Rate & Review", desc: "Evaluate completed food orders and service", href: "/ratings-view" },
+      { title: "🔔 Notifications", desc: "Alerts for new surplus food near you", href: "/notifications-view" },
+    ],
+    ngo: [
+      { title: "🤝 Claim NGO Donations", desc: "Browse and claim free surplus food donations", href: "/ngo-donations-view" },
+      { title: "⏰ Pickup Slots", desc: "Coordinate pickup windows for claimed food", href: "/pickup-slots-view" },
+      { title: "⭐ Rate & Review", desc: "Evaluate completed donation pickups", href: "/ratings-view" },
+      { title: "🛒 Marketplace", desc: "View all live platform listings", href: "/marketplace" },
+      { title: "🔔 Notifications", desc: "Donation alerts & claiming updates", href: "/notifications-view" },
+    ],
+    administrator: [
+      { title: "🛡️ Verification Review", desc: "Review pending users & food listings", onclick: "openReview('pending_verifications')" },
+      { title: "🛒 Marketplace", desc: "Oversee active platform listings", href: "/marketplace" },
+      { title: "🔔 Notifications", desc: "Platform alerts & notifications", href: "/notifications-view" },
+    ],
   };
 
   function switchTab(target) {
@@ -512,424 +638,319 @@ function addDashboardLink(parent, id, text, target, marginTop = "12px") {
   parent.appendChild(link);
 }
 
+
 function showDashboard(user) {
-    document.getElementById("authLayout").style.display = "none";
+  document.getElementById("authLayout").style.display = "none";
+  const label = ROLE_LABELS[user.role] || "Dashboard";
+  document.getElementById("dashTitle").textContent = label;
+  document.getElementById("dashSub").textContent =
+    "Signed in as " + user.name + " (" + user.email + ")";
+  document.getElementById("dashboardView").classList.add("visible");
 
-    const label = ROLE_LABELS[user.role] || "Dashboard";
-
-    document.getElementById("dashTitle").textContent = label;
-
-    document.getElementById("dashSub").textContent =
-        "Signed in as " + user.name + " (" + user.email + ")";
-
-    document.getElementById("dashboardView").classList.add("visible");
-
-    loadDashboard(user);
-
-    const dashCard = document.querySelector(".dash-card");
-
-    const oldMarketplaceLink =
-        document.getElementById("marketplaceLink");
-
-    if (oldMarketplaceLink) {
-        oldMarketplaceLink.remove();
-    }
-
-    const oldManageLink =
-        document.getElementById("manageListingsLink");
-
-    if (oldManageLink) {
-        oldManageLink.remove();
-    }
-
-    ["restaurantMarketplaceLink", "restaurantDonationsLink", "restaurantPickupLink", "restaurantRecommendationsLink"]
-      .forEach((id) => document.getElementById(id)?.remove());
-
-    if (user.role === "restaurant") {
-      addDashboardLink(dashCard, "manageListingsLink", "Manage Listings →", "/listings-view", "16px");
-      addDashboardLink(dashCard, "restaurantMarketplaceLink", "Marketplace →", "/marketplace");
-      addDashboardLink(dashCard, "restaurantDonationsLink", "NGO Donations →", "/ngo-donations-view");
-      addDashboardLink(dashCard, "restaurantPickupLink", "Pickup Slots →", "/pickup-slots-view");
-      addDashboardLink(dashCard, "restaurantRecommendationsLink", "Recommendations →", "/recommendations-view");
-    }
-
-      if (user.role === "ngo") {
-        const marketplaceLink = document.createElement("button");
-        marketplaceLink.id = "marketplaceLink";
-        marketplaceLink.type = "button";
-        marketplaceLink.textContent = "Marketplace →";
-        marketplaceLink.onclick = () => window.location.href = "/marketplace";
-        marketplaceLink.style.display = "block";
-        marketplaceLink.style.margin = "16px auto 0";
-        marketplaceLink.style.color = "#1D4ED8";
-        marketplaceLink.style.fontWeight = "600";
-        marketplaceLink.style.fontSize = "14px";
-        marketplaceLink.style.textDecoration = "none";
-        marketplaceLink.style.background = "rgba(29, 78, 216, 0.08)";
-        marketplaceLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        marketplaceLink.style.cursor = "pointer";
-        marketplaceLink.style.padding = "8px 12px";
-        marketplaceLink.style.borderRadius = "8px";
-        marketplaceLink.style.width = "fit-content";
-        dashCard.appendChild(marketplaceLink);
-
-        const pickupLink = document.createElement("button");
-        pickupLink.type = "button";
-        pickupLink.textContent = "Pickup Slots →";
-        pickupLink.onclick = () => window.location.href = "/pickup-slots-view";
-        pickupLink.style.display = "block";
-        pickupLink.style.margin = "12px auto 0";
-        pickupLink.style.color = "#1D4ED8";
-        pickupLink.style.fontWeight = "600";
-        pickupLink.style.fontSize = "14px";
-        pickupLink.style.background = "rgba(29, 78, 216, 0.08)";
-        pickupLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        pickupLink.style.cursor = "pointer";
-        pickupLink.style.padding = "8px 12px";
-        pickupLink.style.borderRadius = "8px";
-        pickupLink.style.width = "fit-content";
-        dashCard.appendChild(pickupLink);
-
-        const recommendationLink = document.createElement("button");
-        recommendationLink.type = "button";
-        recommendationLink.textContent = "Recommendations →";
-        recommendationLink.onclick = () => window.location.href = "/recommendations-view";
-        recommendationLink.style.display = "block";
-        recommendationLink.style.margin = "12px auto 0";
-        recommendationLink.style.color = "#1D4ED8";
-        recommendationLink.style.fontWeight = "600";
-        recommendationLink.style.fontSize = "14px";
-        recommendationLink.style.background = "rgba(29, 78, 216, 0.08)";
-        recommendationLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        recommendationLink.style.cursor = "pointer";
-        recommendationLink.style.padding = "8px 12px";
-        recommendationLink.style.borderRadius = "8px";
-        recommendationLink.style.width = "fit-content";
-        dashCard.appendChild(recommendationLink);
-
-        const donationsLink = document.createElement("button");
-        donationsLink.type = "button";
-        donationsLink.textContent = "NGO Donations →";
-        donationsLink.onclick = () => window.location.href = "/ngo-donations-view";
-        donationsLink.style.display = "block";
-        donationsLink.style.margin = "12px auto 0";
-        donationsLink.style.color = "#1D4ED8";
-        donationsLink.style.fontWeight = "600";
-        donationsLink.style.fontSize = "14px";
-        donationsLink.style.background = "rgba(29, 78, 216, 0.08)";
-        donationsLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        donationsLink.style.cursor = "pointer";
-        donationsLink.style.padding = "8px 12px";
-        donationsLink.style.borderRadius = "8px";
-        donationsLink.style.width = "fit-content";
-        dashCard.appendChild(donationsLink);
+  // Render feature navigation cards cleanly — no duplicates ever
+  const actions = ROLE_ACTIONS[user.role] || [];
+  document.getElementById("actionGrid").innerHTML = actions
+    .map((act) => {
+      if (act.onclick) {
+        return (
+          `<button type="button" class="action-card" onclick="${act.onclick}">` +
+          `<span class="action-card-title">${escapeHtml(act.title)}</span>` +
+          `<span class="action-card-desc">${escapeHtml(act.desc)}</span>` +
+          `</button>`
+        );
       }
+      return (
+        `<a href="${act.href}" class="action-card">` +
+        `<span class="action-card-title">${escapeHtml(act.title)}</span>` +
+        `<span class="action-card-desc">${escapeHtml(act.desc)}</span>` +
+        `</a>`
+      );
+    })
+    .join("");
 
-    if (user.role === "consumer") {
-        const nearbyLink = document.createElement("button");
-        nearbyLink.type = "button";
-        nearbyLink.textContent = "Nearby Food →";
-        nearbyLink.onclick = () => window.location.href = "/consumer-search";
-        nearbyLink.style.display = "block";
-        nearbyLink.style.margin = "16px auto 0";
-        nearbyLink.style.color = "#1D4ED8";
-        nearbyLink.style.fontWeight = "600";
-        nearbyLink.style.fontSize = "14px";
-        nearbyLink.style.textDecoration = "none";
-        nearbyLink.style.background = "rgba(29, 78, 216, 0.08)";
-        nearbyLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        nearbyLink.style.cursor = "pointer";
-        nearbyLink.style.padding = "8px 12px";
-        nearbyLink.style.borderRadius = "8px";
-        nearbyLink.style.width = "fit-content";
-        dashCard.appendChild(nearbyLink);
-
-        const pickupLink = document.createElement("button");
-        pickupLink.type = "button";
-        pickupLink.textContent = "Pickup Slots →";
-        pickupLink.onclick = () => window.location.href = "/pickup-slots-view";
-        pickupLink.style.display = "block";
-        pickupLink.style.margin = "12px auto 0";
-        pickupLink.style.color = "#1D4ED8";
-        pickupLink.style.fontWeight = "600";
-        pickupLink.style.fontSize = "14px";
-        pickupLink.style.textDecoration = "none";
-        pickupLink.style.background = "rgba(29, 78, 216, 0.08)";
-        pickupLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        pickupLink.style.cursor = "pointer";
-        pickupLink.style.padding = "8px 12px";
-        pickupLink.style.borderRadius = "8px";
-        pickupLink.style.width = "fit-content";
-        dashCard.appendChild(pickupLink);
-
-        const historyLink = document.createElement("button");
-        historyLink.type = "button";
-        historyLink.textContent = "Transaction History →";
-        historyLink.onclick = () => window.location.href = "/consumer-history";
-        historyLink.style.display = "block";
-        historyLink.style.margin = "12px auto 0";
-        historyLink.style.color = "#1D4ED8";
-        historyLink.style.fontWeight = "600";
-        historyLink.style.fontSize = "14px";
-        historyLink.style.textDecoration = "none";
-        historyLink.style.background = "rgba(29, 78, 216, 0.08)";
-        historyLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        historyLink.style.cursor = "pointer";
-        historyLink.style.padding = "8px 12px";
-        historyLink.style.borderRadius = "8px";
-        historyLink.style.width = "fit-content";
-        dashCard.appendChild(historyLink);
-
-        const recommendationLink = document.createElement("button");
-        recommendationLink.type = "button";
-        recommendationLink.textContent = "Recommendations →";
-        recommendationLink.onclick = () => window.location.href = "/recommendations-view";
-        recommendationLink.style.display = "block";
-        recommendationLink.style.margin = "12px auto 0";
-        recommendationLink.style.color = "#1D4ED8";
-        recommendationLink.style.fontWeight = "600";
-        recommendationLink.style.fontSize = "14px";
-        recommendationLink.style.textDecoration = "none";
-        recommendationLink.style.background = "rgba(29, 78, 216, 0.08)";
-        recommendationLink.style.border = "1px solid rgba(29, 78, 216, 0.25)";
-        recommendationLink.style.cursor = "pointer";
-        recommendationLink.style.padding = "8px 12px";
-        recommendationLink.style.borderRadius = "8px";
-        recommendationLink.style.width = "fit-content";
-        dashCard.appendChild(recommendationLink);
-    }
+  loadDashboard(user);
 }
 
+function handleSetLocation() {
+  const statusEl = document.getElementById("locationStatus");
 
-
-  const DASHBOARD_FIELDS = {
-    restaurant: ["active_listings", "active_reservations", "completed_transactions", "revenue_recovered", "meals_donated"],
-    consumer: ["active_reservations", "completed_transactions", "meals_received", "money_saved"],
-    ngo: ["active_reservations", "completed_transactions", "meals_claimed", "donations_fulfilled"],
-    administrator: ["total_users", "pending_verifications", "pending_listings"],
-  };
-
-  function fieldLabel(field) {
-    return field.replaceAll("_", " ").replace(/\b\w/g, letter => letter.toUpperCase());
+  if (!navigator.geolocation) {
+    statusEl.textContent = "Your browser does not support location.";
+    return;
   }
 
-  async function loadDashboard(user) {
-    const response = await fetch(`/dashboard/${user.role === "administrator" ? "admin" : user.role}`, {
-      headers: { "Authorization": localStorage.getItem("session_token") },
-    });
-    if (!response.ok) return;
-    const dashboard = await response.json();
-    document.getElementById("dashMetrics").innerHTML = DASHBOARD_FIELDS[user.role]
-      .map(field => `<button class="metric" type="button" onclick="openReview('${field}')"><strong>${dashboard[field] ?? 0}</strong><span>${fieldLabel(field)}</span></button>`).join("");
-    if (user.role === "administrator") loadPendingListings();
-  }
+  statusEl.textContent = "Requesting location permission...";
 
-  async function loadPendingListings() {
-    const panel = document.getElementById("adminReview");
-    panel.style.display = "block";
-    const response = await fetch("/dashboard/admin/listings/pending", {
-      headers: { "Authorization": localStorage.getItem("session_token") },
-    });
-    if (!response.ok) return;
-    const listings = await response.json();
-    document.getElementById("pendingListings").innerHTML = listings.length
-      ? listings.map(listing => `<div class="review-row"><span><strong>${escapeHtml(listing.food_name)}</strong><br>${escapeHtml(listing.category)} · ${listing.quantity} ${escapeHtml(listing.unit)}</span><span><button class="approve-btn" onclick="reviewListing('${listing.id}', true)">Approve</button> <button class="reject-btn" onclick="reviewListing('${listing.id}', false)">Reject</button></span></div>`).join("")
-      : "<div class='dash-sub'>No listings awaiting review.</div>";
-  }
-
-  async function openReview(field) {
-    if (field === "pending_listings") {
-      await loadPendingListings();
-      document.getElementById("adminReview").scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-    if (field !== "pending_verifications") return;
-    const panel = document.getElementById("adminReview");
-    panel.style.display = "block";
-    panel.querySelector("h3").textContent = "Users awaiting verification";
-    const response = await fetch("/dashboard/admin/users/pending", { headers: { "Authorization": localStorage.getItem("session_token") } });
-    if (!response.ok) return;
-    const users = await response.json();
-    document.getElementById("pendingListings").innerHTML = users.length
-      ? users.map(user => `<div class="review-row"><span><strong>${escapeHtml(user.business_name || user.organization_name || user.name)}</strong><br>${escapeHtml(user.email)} · ${escapeHtml(user.role)}</span><span><button class="approve-btn" onclick="reviewUser('${user.id}', true)">Verify</button> <button class="reject-btn" onclick="reviewUser('${user.id}', false)">Reject</button></span></div>`).join("")
-      : "<div class='dash-sub'>No users awaiting verification.</div>";
-  }
-
-  async function reviewUser(id, approved) {
-    const response = await fetch(`/dashboard/admin/users/${id}/verify?approved=${approved}`, {
-      method: "PATCH",
-      headers: { "Authorization": localStorage.getItem("session_token") },
-    });
-    if (response.ok) {
-      loadDashboard({ role: "administrator" });
-      openReview("pending_verifications");
-    }
-  }
-
-  async function reviewListing(id, approved) {
-    const response = await fetch(`/dashboard/admin/listings/${id}/verify?approved=${approved}`, {
-      method: "PATCH",
-      headers: { "Authorization": localStorage.getItem("session_token") },
-    });
-    if (response.ok) loadPendingListings();
-  }
-
-  function escapeHtml(value) {
-    const div = document.createElement("div");
-    div.textContent = value;
-    return div.innerHTML;
-  }
-
-function showAuth() {
-    document.getElementById("dashboardView").classList.remove("visible");
-    document.getElementById("authLayout").style.display = "flex";
-
-    const marketplaceLink =
-        document.getElementById("marketplaceLink");
-
-    if (marketplaceLink) {
-        marketplaceLink.remove();
-    }
-
-    const manageListingsLink =
-        document.getElementById("manageListingsLink");
-
-    if (manageListingsLink) {
-        manageListingsLink.remove();
-    }
-
-    const consumerDiscoveryLink =
-        document.getElementById("consumerDiscoveryLink");
-
-    if (consumerDiscoveryLink) {
-        consumerDiscoveryLink.remove();
-    }
-
-    const consumerHistoryLink =
-        document.getElementById("consumerHistoryLink");
-
-    if (consumerHistoryLink) {
-        consumerHistoryLink.remove();
-    }
-}
-
-  async function handleLogin() {
-    hideError();
-    const btn = document.getElementById("loginBtn");
-    btn.disabled = true;
-    btn.textContent = "Logging in...";
-
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showError(data.detail || "Login failed.");
-        return;
-      }
-
-      localStorage.setItem("session_token", data.session_token);
-      showDashboard(data.user);
-    } catch (err) {
-      showError("Could not reach the server. Is the backend running?");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Log in";
-    }
-  }
-
-  async function handleRegister() {
-    hideError();
-    const btn = document.getElementById("registerBtn");
-    btn.disabled = true;
-    btn.textContent = "Creating account...";
-
-    const role = document.getElementById("regRole").value;
-
-    const payload = {
-      name: document.getElementById("regName").value.trim(),
-      email: document.getElementById("regEmail").value.trim(),
-      password: document.getElementById("regPassword").value,
-      phone: document.getElementById("regPhone").value.trim(),
-      role: role,
-    };
-
-    if (role === "restaurant") {
-      payload.business_name = document.getElementById("regBusinessName").value.trim();
-      payload.business_address = document.getElementById("regBusinessAddress").value.trim();
-    }
-    if (role === "ngo") {
-      payload.organization_name = document.getElementById("regOrgName").value.trim();
-      payload.organization_address = document.getElementById("regOrgAddress").value.trim();
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showError(data.detail || "Registration failed.");
-        return;
-      }
-
-      localStorage.setItem("session_token", data.session_token);
-      showDashboard(data.user);
-    } catch (err) {
-      showError("Could not reach the server. Is the backend running?");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Create account";
-    }
-  }
-
-  async function handleLogout() {
-    const token = localStorage.getItem("session_token");
-    if (token) {
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+      statusEl.textContent = "Saving location...";
       try {
-        await fetch(`${API_BASE}/auth/logout`, {
-          method: "POST",
-          headers: { "Authorization": token },
+        const token = localStorage.getItem("session_token");
+        const res = await fetch("/auth/me/location", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+          },
+          body: JSON.stringify({ latitude, longitude }),
         });
+        if (res.ok) {
+          statusEl.textContent = "Location saved successfully!";
+        } else {
+          statusEl.textContent = "Failed to save location.";
+        }
       } catch (err) {
-        // ignore network errors on logout — clear local state regardless
+        statusEl.textContent = "Server error while saving location.";
       }
+    },
+    () => {
+      statusEl.textContent = "Location access denied or unavailable.";
     }
-    localStorage.removeItem("session_token");
-    showAuth();
-  }
+  );
+}
 
-  // On page load, if a session token already exists, verify it and skip straight to the dashboard
-  async function checkExistingSession() {
-    const token = localStorage.getItem("session_token");
-    if (!token) return;
+async function loadDashboard(user) {
+  const metricsEl = document.getElementById("dashMetrics");
+  const adminPanel = document.getElementById("adminReview");
 
+  if (user.role === "restaurant") {
     try {
-      const res = await fetch(`${API_BASE}/auth/me`, {
+      const token = localStorage.getItem("session_token");
+      const res = await fetch("/dashboard/restaurant", {
         headers: { "Authorization": token },
       });
-      if (res.ok) {
-        const user = await res.json();
-        showDashboard(user);
-      } else {
-        localStorage.removeItem("session_token");
-      }
+      if (!res.ok) return;
+      const d = await res.json();
+
+      const fmt = (n) =>
+        Number.isInteger(n) ? n.toString() : parseFloat(n).toFixed(2);
+
+      metricsEl.innerHTML =
+        `<div class="metric"><div class="metric-value">${d.active_listings}</div><div class="metric-label">Active Listings</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.active_reservations}</div><div class="metric-label">Pending Pickups</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.food_saved_count}</div><div class="metric-label">Meals Rescued</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.meals_donated}</div><div class="metric-label">Meals Donated</div></div>` +
+        `<div class="metric"><div class="metric-value">$${fmt(d.revenue_recovered)}</div><div class="metric-label">Revenue Recovered</div></div>` +
+        `<div class="metric"><div class="metric-value">${fmt(d.waste_reduced_percentage)}%</div><div class="metric-label">Waste Reduced</div></div>`;
     } catch (err) {
-      // backend not reachable yet — stay on auth screen
+      metricsEl.innerHTML =
+        "<p style='color:#5A7189;font-size:13px;'>Could not load dashboard metrics.</p>";
     }
+  } else if (user.role === "administrator") {
+    if (adminPanel) adminPanel.style.display = "none";
+  }
+}
+
+async function loadPendingListings() {
+  const res = await fetch("/dashboard/admin/listings/pending", {
+    headers: { "Authorization": localStorage.getItem("session_token") },
+  });
+  if (!res.ok) return;
+  const listings = await res.json();
+  document.getElementById("pendingListings").innerHTML = listings.length
+    ? listings
+        .map(
+          (l) =>
+            `<div class="review-row">` +
+            `<span><strong>${escapeHtml(l.food_name)}</strong><br>` +
+            `${escapeHtml(l.description || "")} &mdash; ${l.quantity} ${escapeHtml(l.unit || "")}</span>` +
+            `<span>` +
+            `<button class="approve-btn" onclick="reviewListing('${l.id}', true)">Approve</button> ` +
+            `<button class="reject-btn" onclick="reviewListing('${l.id}', false)">Reject</button>` +
+            `</span></div>`
+        )
+        .join("")
+    : "<div class='dash-sub'>No listings awaiting approval.</div>";
+}
+
+async function openReview(field) {
+  if (field === "pending_listings") {
+    const panel = document.getElementById("adminReview");
+    panel.style.display = "block";
+    panel.querySelector("h3").textContent = "Listings awaiting approval";
+    await loadPendingListings();
+    document.getElementById("adminReview").scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  if (field !== "pending_verifications") return;
+  const panel = document.getElementById("adminReview");
+  panel.style.display = "block";
+  panel.querySelector("h3").textContent = "Users awaiting verification";
+  const response = await fetch("/dashboard/admin/users/pending", {
+    headers: { "Authorization": localStorage.getItem("session_token") },
+  });
+  if (!response.ok) return;
+  const users = await response.json();
+  document.getElementById("pendingListings").innerHTML = users.length
+    ? users
+        .map(
+          (user) =>
+            `<div class="review-row">` +
+            `<span><strong>${escapeHtml(user.business_name || user.organization_name || user.name)}</strong><br>` +
+            `${escapeHtml(user.email)} &middot; ${escapeHtml(user.role)}</span>` +
+            `<span>` +
+            `<button class="approve-btn" onclick="reviewUser('${user.id}', true)">Verify</button> ` +
+            `<button class="reject-btn" onclick="reviewUser('${user.id}', false)">Reject</button>` +
+            `</span></div>`
+        )
+        .join("")
+    : "<div class='dash-sub'>No users awaiting verification.</div>";
+}
+
+async function reviewUser(id, approved) {
+  const response = await fetch(
+    `/dashboard/admin/users/${id}/verify?approved=${approved}`,
+    {
+      method: "PATCH",
+      headers: { "Authorization": localStorage.getItem("session_token") },
+    }
+  );
+  if (response.ok) {
+    loadDashboard({ role: "administrator" });
+    openReview("pending_verifications");
+  }
+}
+
+async function reviewListing(id, approved) {
+  const response = await fetch(
+    `/dashboard/admin/listings/${id}/verify?approved=${approved}`,
+    {
+      method: "PATCH",
+      headers: { "Authorization": localStorage.getItem("session_token") },
+    }
+  );
+  if (response.ok) loadPendingListings();
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
+}
+
+function showAuth() {
+  document.getElementById("dashboardView").classList.remove("visible");
+  document.getElementById("authLayout").style.display = "flex";
+}
+
+async function handleLogin() {
+  hideError();
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.textContent = "Logging in...";
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.detail || "Login failed.");
+      return;
+    }
+
+    localStorage.setItem("session_token", data.session_token);
+    showDashboard(data.user);
+  } catch (err) {
+    showError("Could not reach the server. Is the backend running?");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Log in";
+  }
+}
+
+async function handleRegister() {
+  hideError();
+  const btn = document.getElementById("registerBtn");
+  btn.disabled = true;
+  btn.textContent = "Creating account...";
+
+  const role = document.getElementById("regRole").value;
+
+  const payload = {
+    name: document.getElementById("regName").value.trim(),
+    email: document.getElementById("regEmail").value.trim(),
+    password: document.getElementById("regPassword").value,
+    phone: document.getElementById("regPhone").value.trim(),
+    role: role,
+  };
+
+  if (role === "restaurant") {
+    payload.business_name = document.getElementById("regBusinessName").value.trim();
+    payload.business_address = document.getElementById("regBusinessAddress").value.trim();
+  }
+  if (role === "ngo") {
+    payload.organization_name = document.getElementById("regOrgName").value.trim();
+    payload.organization_address = document.getElementById("regOrgAddress").value.trim();
   }
 
-  checkExistingSession();
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.detail || "Registration failed.");
+      return;
+    }
+
+    localStorage.setItem("session_token", data.session_token);
+    showDashboard(data.user);
+  } catch (err) {
+    showError("Could not reach the server. Is the backend running?");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Create account";
+  }
+}
+
+async function handleLogout() {
+  const token = localStorage.getItem("session_token");
+  if (token) {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        headers: { "Authorization": token },
+      });
+    } catch (err) {
+      // ignore network errors on logout — clear local state regardless
+    }
+  }
+  localStorage.removeItem("session_token");
+  showAuth();
+}
+
+// On page load, verify any existing session token
+async function checkExistingSession() {
+  const token = localStorage.getItem("session_token");
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: { "Authorization": token },
+    });
+    if (res.ok) {
+      const user = await res.json();
+      showDashboard(user);
+    } else {
+      localStorage.removeItem("session_token");
+    }
+  } catch (err) {
+    // backend not reachable yet — stay on auth screen
+  }
+}
+
+checkExistingSession();
 </script>
 
 </body>

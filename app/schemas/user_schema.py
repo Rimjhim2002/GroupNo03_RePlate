@@ -34,3 +34,6 @@ class UserRead(BaseModel):
 class SessionResponse(BaseModel):
     session_token:str
     user:UserRead
+class LocationUpdate(BaseModel):
+    latitude: float
+    longitude: float

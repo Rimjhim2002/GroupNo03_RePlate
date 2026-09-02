@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -7,8 +7,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.database import init_db
-from app.routes import auth_routes, dashboard_routes, food_listing_routes, consumer_routes
-from app.routes import lifecycle_routes
+from app.routes import (
+    auth_routes,
+    dashboard_routes,
+    food_listing_routes,
+    consumer_routes,
+    lifecycle_routes,
+    notification_routes,
+    analytics_routes,
+    rating_routes,
+    report_routes,
+)
 from app.services.expiry_monitor import monitor_expiry
 
 
@@ -20,7 +29,6 @@ def serve_html_file(filename: str) -> FileResponse:
     file_path = (VIEWS_DIR / filename).resolve()
     if not file_path.exists():
         raise FileNotFoundError(f"HTML file not found: {file_path}")
-
     return FileResponse(
         path=str(file_path),
         headers={
@@ -43,6 +51,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="RePlate API", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,11 +59,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.include_router(auth_routes.router)
 app.include_router(dashboard_routes.router)
 app.include_router(food_listing_routes.router)
 app.include_router(consumer_routes.router)
 app.include_router(lifecycle_routes.router)
+app.include_router(notification_routes.router)
+app.include_router(analytics_routes.router)
+app.include_router(rating_routes.router)
+app.include_router(report_routes.router)
 
 
 @app.get("/")
@@ -95,3 +109,23 @@ async def serve_ngo_donations_page():
 @app.get("/pickup-slots-view")
 async def serve_pickup_slots_page():
     return serve_html_file("pickup-slots.html")
+
+
+@app.get("/notifications-view")
+async def serve_notifications_page():
+    return serve_html_file("notifications.html")
+
+
+@app.get("/analytics-view")
+async def serve_analytics_page():
+    return serve_html_file("analytics.html")
+
+
+@app.get("/ratings-view")
+async def serve_ratings_page():
+    return serve_html_file("ratings.html")
+
+
+@app.get("/reports-view")
+async def serve_reports_page():
+    return serve_html_file("reports.html")
