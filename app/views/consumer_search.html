@@ -46,8 +46,9 @@
         }
         .nav-link:hover, .logout-btn:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
         .topbar-user {
-            font-size: 12px; color: var(--slate); background: transparent; border: none; padding: 0;
-            font-weight: 600; cursor: pointer; line-height: 1.2;
+            font-size: 13px; color: var(--white); background: transparent; border: 1.5px solid rgba(255,255,255,0.25);
+            padding: 7px 16px; border-radius: 7px; font-family: inherit; font-weight: 600; cursor: pointer;
+            line-height: 1.2; white-space: nowrap; transition: all 0.15s ease;
         }
         .page { max-width: 1100px; margin: 28px auto; padding: 0 18px 60px; }
         .page-header {
@@ -117,7 +118,7 @@
                 <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
                 <a class="nav-link" href="/recommendations-view">Recommendations</a>
             </div>
-            <button id="userLabel" class="topbar-user" type="button" onclick="window.location.href='/'">Welcome, User</button>
+            <button id="userLabel" class="topbar-user" type="button" onclick="window.location.href='/dashboard'">Welcome</button>
             <button class="logout-btn" onclick="handleLogout()">Log out</button>
         </div>
     </header>
@@ -166,7 +167,7 @@
                 const user = await res.json();
 
                 userHasLocation = user.latitude != null && user.longitude != null;
-                const displayName = user.business_name || user.organization_name || user.name || user.email || 'User';
+                const displayName = user.name || user.email || 'User';
                 const welcomeUser = document.getElementById('welcomeUser');
                 const userLabel = document.getElementById('userLabel');
                 if (welcomeUser) welcomeUser.textContent = displayName;

@@ -64,15 +64,18 @@
     }
 
     .user {
-      color: var(--slate);
-      font-size: 12px;
+      color: var(--white);
+      font-size: 13px;
       font-weight: 600;
       background: transparent;
-      border: none;
-      padding: 0;
-      border-radius: 0;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-family: inherit;
       cursor: pointer;
       line-height: 1.2;
+      white-space: nowrap;
+      transition: all 0.15s ease;
       text-decoration: none;
     }
 
@@ -269,10 +272,6 @@
         padding: 16px 20px;
       }
 
-      .user {
-        display: none;
-      }
-
       .page {
         padding: 30px 18px 60px;
       }
@@ -290,7 +289,7 @@
       <div class="header-links">
         <a class="nav-btn" href="/listings-view">Food Listings</a>
         <a class="nav-btn" href="/consumer-search">Nearby Food</a>
-        <a class="nav-btn" href="/ngo-donations-view">NGO Donations</a>
+        <a class="nav-btn" href="/ngo-donations-view" style="display:none">NGO Donations</a>
         <a class="nav-btn" href="/pickup-slots-view">Pickup Slots</a>
         <a class="nav-btn" href="/recommendations-view">Recommendations</a>
       </div>
@@ -299,7 +298,7 @@
         id="userNameLabel"
         class="user"
         type="button"
-        onclick="window.location.href = '/'"
+        onclick="window.location.href = '/dashboard'"
       >
         Loading...
       </button>
@@ -353,11 +352,12 @@
           restaurant: ["/listings-view", "/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
           ngo: ["/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
           consumer: ["/consumer-search", "/consumer-history", "/pickup-slots-view", "/recommendations-view"],
+          administrator: ["/marketplace"],
         };
         const links = document.querySelectorAll(".nav-btn");
         links.forEach((link) => {
           const href = link.getAttribute("href");
-          if (!href || !allowed[user.role] || allowed[user.role].includes(href)) {
+          if (!href || (allowed[user.role] && allowed[user.role].includes(href))) {
             link.style.display = "inline-block";
             return;
           }
@@ -512,10 +512,10 @@
         }
 
         const user = await res.json();
-        const displayName = user.business_name || user.organization_name || user.name || "User";
+        const displayName = user.name || user.email || "User";
         label.textContent = `Welcome, ${displayName}`;
       } catch (err) {
-        label.textContent = "Welcome, User";
+        label.textContent = "Welcome";
       }
     }
 

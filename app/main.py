@@ -76,6 +76,11 @@ async def serve_login_page():
     return serve_html_file("login.html")
 
 
+@app.get("/dashboard")
+async def serve_dashboard_page():
+    return serve_html_file("login.html")
+
+
 @app.get("/listings-view")
 async def serve_listings_page():
     return serve_html_file("listings.html")

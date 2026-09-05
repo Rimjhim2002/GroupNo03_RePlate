@@ -27,13 +27,17 @@
   .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .topbar-user {
     font-size: 12px;
-    color: var(--slate);
+    color: var(--white);
     background: transparent;
-    border: none;
-    padding: 0;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    padding: 7px 16px;
+    border-radius: 7px;
+    font-family: inherit;
     font-weight: 600;
     cursor: pointer;
     line-height: 1.2;
+    white-space: nowrap;
+    transition: all 0.15s ease;
   }
   .back-link, .logout-btn, .nav-link {
     background: transparent; border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
@@ -100,7 +104,7 @@
     <div class="nav-links">
       <a class="nav-link" href="/listings-view">Food Listings</a>
       <a class="nav-link" href="/marketplace">Marketplace</a>
-      <a class="nav-link" href="/ngo-donations-view">NGO Donations</a>
+      <a class="nav-link" href="/ngo-donations-view" style="display:none">NGO Donations</a>
       <a class="nav-link" href="/consumer-search">Nearby Food</a>
       <a class="nav-link" href="/consumer-history">Transaction History</a>
       <a class="nav-link" href="/recommendations-view">Recommendations</a>
@@ -109,9 +113,9 @@
       id="userLabel"
       class="topbar-user"
       type="button"
-      onclick="window.location.href = '/'"
+      onclick="window.location.href = '/dashboard'"
     >
-      Welcome, User
+      Welcome
     </button>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
@@ -200,7 +204,7 @@
       const user = await res.json();
       window.currentUserRole = user.role;
       if (user.role === "administrator") { window.location.href = "/"; return; }
-      const displayName = user.business_name || user.organization_name || user.name || "User";
+      const displayName = user.name || user.email || "User";
       document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
       if (user.role === "restaurant") {
         loadMyListings();

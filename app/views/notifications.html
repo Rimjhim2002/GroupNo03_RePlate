@@ -48,7 +48,17 @@
 
   .topbar-user {
     font-size: 13px;
-    color: var(--slate);
+    color: var(--white);
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    padding: 7px 16px;
+    border-radius: 7px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: all 0.15s ease;
   }
 
   .back-link, .logout-btn, .mark-all-btn {
@@ -207,8 +217,7 @@
 <div class="topbar">
   <div class="brand-mark">RePlate<span>.</span></div>
   <div class="topbar-right">
-    <span class="topbar-user" id="userLabel"></span>
-    <a class="back-link" href="/">Dashboard</a>
+    <button class="topbar-user" id="userLabel" type="button" onclick="window.location.href = '/dashboard'">Welcome</button>
     <button class="logout-btn" onclick="handleLogout()">Log out</button>
   </div>
 </div>
@@ -263,7 +272,8 @@
         return;
       }
       const user = await res.json();
-      document.getElementById("userLabel").textContent = user.name;
+      const displayName = user.name || user.email || "User";
+      document.getElementById("userLabel").textContent = `Welcome, ${displayName}`;
       loadNotifications();
     } catch (err) {
       window.location.href = "/";
