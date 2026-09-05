@@ -584,7 +584,8 @@
       { title: "🔔 Notifications", desc: "Donation alerts & claiming updates", href: "/notifications-view" },
     ],
     administrator: [
-      { title: "🛡️ Verification Review", desc: "Review pending users & food listings", onclick: "openReview('pending_verifications')" },
+      { title: "📝 Pending Listings", desc: "Review and approve new food listings", onclick: "openReview('pending_listings')" },
+      { title: "👥 User Verifications", desc: "Review pending restaurant & NGO accounts", onclick: "openReview('pending_verifications')" },
       { title: "🛒 Marketplace", desc: "Oversee active platform listings", href: "/marketplace" },
       { title: "🔔 Notifications", desc: "Platform alerts & notifications", href: "/notifications-view" },
     ],
@@ -714,18 +715,14 @@ async function loadDashboard(user) {
   const metricsEl = document.getElementById("dashMetrics");
   const adminPanel = document.getElementById("adminReview");
 
+  const token = localStorage.getItem("session_token");
+  const fmt = (n) => (Number.isInteger(n) ? n.toString() : parseFloat(n || 0).toFixed(2));
+
   if (user.role === "restaurant") {
     try {
-      const token = localStorage.getItem("session_token");
-      const res = await fetch("/dashboard/restaurant", {
-        headers: { "Authorization": token },
-      });
+      const res = await fetch("/dashboard/restaurant", { headers: { "Authorization": token } });
       if (!res.ok) return;
       const d = await res.json();
-
-      const fmt = (n) =>
-        Number.isInteger(n) ? n.toString() : parseFloat(n).toFixed(2);
-
       metricsEl.innerHTML =
         `<div class="metric"><div class="metric-value">${d.active_listings}</div><div class="metric-label">Active Listings</div></div>` +
         `<div class="metric"><div class="metric-value">${d.active_reservations}</div><div class="metric-label">Pending Pickups</div></div>` +
@@ -734,11 +731,47 @@ async function loadDashboard(user) {
         `<div class="metric"><div class="metric-value">$${fmt(d.revenue_recovered)}</div><div class="metric-label">Revenue Recovered</div></div>` +
         `<div class="metric"><div class="metric-value">${fmt(d.waste_reduced_percentage)}%</div><div class="metric-label">Waste Reduced</div></div>`;
     } catch (err) {
+      metricsEl.innerHTML = "<p style='color:#5A7189;font-size:13px;'>Could not load dashboard metrics.</p>";
+    }
+  } else if (user.role === "consumer") {
+    try {
+      const res = await fetch("/dashboard/consumer", { headers: { "Authorization": token } });
+      if (!res.ok) return;
+      const d = await res.json();
       metricsEl.innerHTML =
-        "<p style='color:#5A7189;font-size:13px;'>Could not load dashboard metrics.</p>";
+        `<div class="metric"><div class="metric-value">${d.active_reservations ?? 0}</div><div class="metric-label">Active Reservations</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.completed_transactions ?? 0}</div><div class="metric-label">Completed Orders</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.meals_received ?? 0}</div><div class="metric-label">Meals Received</div></div>` +
+        `<div class="metric"><div class="metric-value">$${fmt(d.money_saved)}</div><div class="metric-label">Money Saved</div></div>`;
+    } catch (err) {
+      metricsEl.innerHTML = "<p style='color:#5A7189;font-size:13px;'>Could not load dashboard metrics.</p>";
+    }
+  } else if (user.role === "ngo") {
+    try {
+      const res = await fetch("/dashboard/ngo", { headers: { "Authorization": token } });
+      if (!res.ok) return;
+      const d = await res.json();
+      metricsEl.innerHTML =
+        `<div class="metric"><div class="metric-value">${d.active_reservations ?? 0}</div><div class="metric-label">Pending Pickups</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.completed_transactions ?? 0}</div><div class="metric-label">Completed Claims</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.meals_claimed ?? 0}</div><div class="metric-label">Meals Claimed</div></div>` +
+        `<div class="metric"><div class="metric-value">${d.donations_fulfilled ?? 0}</div><div class="metric-label">Donations Fulfilled</div></div>`;
+    } catch (err) {
+      metricsEl.innerHTML = "<p style='color:#5A7189;font-size:13px;'>Could not load dashboard metrics.</p>";
     }
   } else if (user.role === "administrator") {
-    if (adminPanel) adminPanel.style.display = "none";
+    try {
+      const res = await fetch("/dashboard/admin", { headers: { "Authorization": token } });
+      if (!res.ok) return;
+      const d = await res.json();
+      metricsEl.innerHTML =
+        `<div class="metric"><div class="metric-value">${d.total_users ?? 0}</div><div class="metric-label">Total Users</div></div>` +
+        `<div class="metric" onclick="openReview('pending_verifications')" style="cursor:pointer;"><div class="metric-value">${d.pending_verifications ?? 0}</div><div class="metric-label">Pending Users ↗</div></div>` +
+        `<div class="metric" onclick="openReview('pending_listings')" style="cursor:pointer;"><div class="metric-value">${d.pending_listings ?? 0}</div><div class="metric-label">Pending Listings ↗</div></div>`;
+      loadPendingListings();
+    } catch (err) {
+      metricsEl.innerHTML = "<p style='color:#5A7189;font-size:13px;'>Could not load admin dashboard.</p>";
+    }
   }
 }
 
@@ -820,7 +853,10 @@ async function reviewListing(id, approved) {
       headers: { "Authorization": localStorage.getItem("session_token") },
     }
   );
-  if (response.ok) loadPendingListings();
+  if (response.ok) {
+    loadPendingListings();
+    loadDashboard({ role: "administrator" });
+  }
 }
 
 function escapeHtml(value) {

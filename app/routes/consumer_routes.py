@@ -17,7 +17,7 @@ async def search_food_listings(
     max_distance_km: Optional[float] = Query(default=None),
     location: Optional[str] = Query(default=None),
     max_expiry_hours: Optional[float] = Query(default=None),
-    current_user: User = Depends(require_role(UserRole.CONSUMER, UserRole.RESTAURANT, UserRole.NGO)),
+    current_user: User = Depends(require_role(UserRole.CONSUMER, UserRole.RESTAURANT, UserRole.NGO, UserRole.ADMINISTRATOR)),
 ):
     return await consumer_controller.search_consumer_listings(
         current_user,

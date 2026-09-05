@@ -67,7 +67,7 @@
             border-radius: 16px; padding: 20px; margin-bottom: 22px;
         }
         .filters {
-            display: grid; grid-template-columns: 2fr 1.3fr 1.4fr 1.2fr 1.1fr; gap: 14px; align-items: end;
+            display: grid; grid-template-columns: 2fr 1.3fr 1.4fr 1.2fr 1.2fr 1.1fr; gap: 14px; align-items: end;
         }
         input, select, button {
             width: 100%; padding: 12px 13px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px;
@@ -140,6 +140,7 @@
                 <input id="maxPriceInput" type="number" min="0" max="1500" step="0.5" placeholder="Max price" />
                 <input id="locationInput" type="text" placeholder="Location" />
                 <input id="maxExpiryInput" type="number" min="1" step="1" placeholder="Max expiry (hrs)" />
+                <input id="maxDistanceInput" type="number" min="0.1" step="0.5" placeholder="Within (km)" />
                 <div style="display:flex; gap:10px;">
                     <button class="search-btn" onclick="searchByFoodName()">Search</button>
                     <button class="filter-btn" onclick="applyFilters()">Filter</button>
@@ -154,6 +155,7 @@
 
     <script>
         const token = () => localStorage.getItem('session_token');
+        let userHasLocation = false;
 
         async function applyRoleNavAccess() {
             try {
@@ -163,6 +165,7 @@
                 if (!res.ok) return;
                 const user = await res.json();
 
+                userHasLocation = user.latitude != null && user.longitude != null;
                 const displayName = user.business_name || user.organization_name || user.name || user.email || 'User';
                 const welcomeUser = document.getElementById('welcomeUser');
                 const userLabel = document.getElementById('userLabel');
@@ -170,9 +173,10 @@
                 if (userLabel) userLabel.textContent = `Welcome, ${displayName}`;
 
                 const allowed = {
-                    restaurant: ['/listings-view', '/pickup-slots-view', '/recommendations-view'],
-                    ngo: ['/ngo-donations-view', '/pickup-slots-view', '/recommendations-view'],
+                    restaurant: ['/consumer-search', '/listings-view', '/pickup-slots-view', '/recommendations-view'],
+                    ngo: ['/consumer-search', '/ngo-donations-view', '/pickup-slots-view', '/recommendations-view'],
                     consumer: ['/consumer-search', '/consumer-history', '/pickup-slots-view', '/recommendations-view'],
+                    administrator: ['/consumer-search', '/marketplace', '/notifications-view'],
                 };
                 document.querySelectorAll('.nav-link').forEach((link) => {
                     const href = link.getAttribute('href');
@@ -217,7 +221,7 @@
                     <span class="old-price">$${original}</span>
                     <span class="price">$${price}</span>
                 </div>
-                <div class="muted">${listing.available_quantity} ${listing.unit} left • ${listing.remaining_hours}h left</div>
+                <div class="muted">${listing.available_quantity} ${listing.unit} left • ${listing.remaining_hours}h left${listing.distance_km != null ? ` • ${listing.distance_km} km away` : ''}</div>
                 <div class="actions">
                     <input type="number" id="qty-${listing.id}" min="1" max="${listing.available_quantity}" value="1" />
                     <button class="reserve-btn" onclick="reserveListing('${listing.id}')">Reserve</button>
@@ -239,12 +243,50 @@
             const maxPrice = document.getElementById('maxPriceInput').value;
             const location = document.getElementById('locationInput').value.trim();
             const maxExpiryHours = document.getElementById('maxExpiryInput').value;
+            const maxDistanceKm = document.getElementById('maxDistanceInput').value;
             const params = new URLSearchParams();
             if (search) params.append('search', search);
             if (maxPrice) params.append('max_price', maxPrice);
             if (location) params.append('location', location);
             if (maxExpiryHours) params.append('max_expiry_hours', maxExpiryHours);
+            if (maxDistanceKm) params.append('max_distance_km', maxDistanceKm);
+            if (maxDistanceKm && !userHasLocation) {
+                requestLocationThenFilter(params);
+                return;
+            }
             return loadListingsWithParams(params);
+        }
+
+        function requestLocationThenFilter(params) {
+            if (!navigator.geolocation) {
+                showMessage('Geolocation is not supported by your browser.', true);
+                return;
+            }
+            showMessage('Requesting your location to apply distance filter...');
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    try {
+                        const res = await fetch('/auth/me/location', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': token() },
+                            body: JSON.stringify({ latitude, longitude }),
+                        });
+                        if (res.ok) {
+                            userHasLocation = true;
+                            showMessage('Location saved! Applying distance filter...');
+                            loadListingsWithParams(params);
+                        } else {
+                            showMessage('Unable to save location on server.', true);
+                        }
+                    } catch (e) {
+                        showMessage('Network error while saving location.', true);
+                    }
+                },
+                () => {
+                    showMessage('Location access was denied. Please allow location access to filter by distance.', true);
+                }
+            );
         }
 
         async function handleLogout() {
@@ -263,12 +305,20 @@
         applyRoleNavAccess();
 
         async function loadListingsWithParams(params) {
+            const authToken = token();
+            if (!authToken) {
+                const grid = document.getElementById('resultsGrid');
+                grid.innerHTML = '<div class="card"><p class="muted">Please log in to view and reserve food listings.</p></div>';
+                return;
+            }
+
             const res = await fetch(`/consumer/search?${params.toString()}`, {
-                headers: { 'Authorization': token() }
+                headers: { 'Authorization': authToken }
             });
 
             if (!res.ok) {
-                showMessage('Unable to load food listings.', true);
+                const errData = await res.json().catch(() => ({}));
+                showMessage(errData.detail || 'Unable to load food listings.', true);
                 return;
             }
 

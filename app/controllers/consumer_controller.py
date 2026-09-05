@@ -133,9 +133,10 @@ async def search_consumer_listings(
     location_term: Optional[str] = None,
     max_expiry_hours: Optional[float] = None,
 ):
+    from beanie.operators import In
     listings = await FoodListing.find(
         FoodListing.status == ListingStatus.AVAILABLE,
-        FoodListing.approval_status == ListingApprovalStatus.APPROVED,
+        In(FoodListing.approval_status, [ListingApprovalStatus.APPROVED, None]),
         FoodListing.listing_type == ListingType.SALE,
     ).sort(+FoodListing.expiry_date).to_list()
 
@@ -156,9 +157,17 @@ async def search_consumer_listings(
         restaurant = None
         restaurant_id = None
         if getattr(listing, "restaurant", None):
-            restaurant_id = str(listing.restaurant.ref.id)
+            restaurant_id = str(
+                listing.restaurant.ref.id
+                if hasattr(listing.restaurant, "ref")
+                else getattr(listing.restaurant, "id", None)
+            )
             try:
-                restaurant = await listing.restaurant.fetch()
+                restaurant = (
+                    await listing.restaurant.fetch()
+                    if hasattr(listing.restaurant, "fetch")
+                    else listing.restaurant
+                )
             except Exception:
                 restaurant = None
         response.append(
