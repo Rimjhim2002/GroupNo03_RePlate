@@ -115,7 +115,6 @@
             <div class="nav-links">
                 <a class="nav-link" href="/consumer-search">Nearby Food</a>
                 <a class="nav-link" href="/consumer-history">Transaction History</a>
-                <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
                 <a class="nav-link" href="/recommendations-view">Recommendations</a>
             </div>
             <button id="userLabel" class="topbar-user" type="button" onclick="window.location.href='/dashboard'">Welcome</button>
@@ -174,9 +173,9 @@
                 if (userLabel) userLabel.textContent = `Welcome, ${displayName}`;
 
                 const allowed = {
-                    restaurant: ['/consumer-search', '/listings-view', '/pickup-slots-view', '/recommendations-view'],
-                    ngo: ['/consumer-search', '/ngo-donations-view', '/pickup-slots-view', '/recommendations-view'],
-                    consumer: ['/consumer-search', '/consumer-history', '/pickup-slots-view', '/recommendations-view'],
+                    restaurant: ['/consumer-search', '/listings-view', '/recommendations-view'],
+                    ngo: ['/consumer-search', '/ngo-donations-view', '/recommendations-view'],
+                    consumer: ['/consumer-search', '/consumer-history', '/recommendations-view'],
                     administrator: ['/consumer-search', '/marketplace', '/notifications-view'],
                 };
                 document.querySelectorAll('.nav-link').forEach((link) => {

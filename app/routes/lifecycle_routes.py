@@ -48,14 +48,26 @@ async def urgent_listings(hours: float = 6):
  
 # ---------- NGO Food Claiming ----------
 @router.get("/ngo/donations")
-async def browse_donations():
+async def browse_donations(
+    current_user: User = Depends(require_role(UserRole.NGO, UserRole.RESTAURANT)),
+):
     return await ngo_service.browse_available_donations()
  
  
 @router.post("/ngo/donations/{food_listing_id}/claim")
-async def claim_donation(food_listing_id: str, quantity: int, current_user: User = Depends(get_current_user)):
+async def claim_donation(
+    food_listing_id: str,
+    quantity: int,
+    current_user: User = Depends(require_role(UserRole.NGO)),
+):
     try:
-        return await ngo_service.claim_donation(current_user, food_listing_id, quantity)
+        transaction = await ngo_service.claim_donation(current_user, food_listing_id, quantity)
+        return {
+            "transaction_id": str(transaction.id),
+            "listing_id": food_listing_id,
+            "quantity": transaction.quantity,
+            "status": transaction.status.value,
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
  

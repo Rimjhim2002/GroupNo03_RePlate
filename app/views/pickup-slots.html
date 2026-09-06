@@ -154,9 +154,7 @@
       <input type="number" id="slotCapacity" min="1" placeholder="5" />
     </div>
 
-    <button class="submit-btn" id="searchSlotBtn" type="button" onclick="searchPickupSlot()">Confirm Pickup Slot</button>
- 
-    <button class="submit-btn" id="addSlotBtn" onclick="handleAddSlot()">Add pickup slot</button>
+    <p class="empty-state">Pickup slots are managed from the Listings page.</p>
   </div>
  
   <div id="slotsContainer">
@@ -209,7 +207,6 @@
       if (user.role === "restaurant") {
         loadMyListings();
       } else {
-        document.getElementById("addSlotBtn").style.display = "none";
         loadAvailableListings();
       }
     } catch (err) {
@@ -261,6 +258,10 @@
       }
  
       select.innerHTML = listings.map(l => `<option value="${l.id}">${l.food_name}</option>`).join("");
+      const requestedListingId = new URLSearchParams(window.location.search).get("listing_id");
+      if (requestedListingId && listings.some(listing => listing.id === requestedListingId)) {
+        select.value = requestedListingId;
+      }
       onListingChange();
     } catch (err) {
       select.innerHTML = '<option value="">Could not load listings</option>';
@@ -349,52 +350,6 @@
       }).join("")}</div>`;
     } catch (err) {
       container.innerHTML = '<div class="empty-state">Could not load pickup slots.</div>';
-    }
-  }
- 
-  async function handleAddSlot() {
-    hideMessages();
-    const listingId = document.getElementById("listingSelect").value;
-    if (!listingId) { showError("Select a listing first."); return; }
- 
-    const startLocal = document.getElementById("slotStart").value;
-    const endLocal = document.getElementById("slotEnd").value;
-    const capacity = parseInt(document.getElementById("slotCapacity").value, 10);
- 
-    if (!startLocal || !endLocal || !capacity) {
-      showError("Fill in start time, end time, and capacity.");
-      return;
-    }
- 
-    const btn = document.getElementById("addSlotBtn");
-    btn.disabled = true;
-    btn.textContent = "Adding…";
- 
-    const startTime = new Date(startLocal).toISOString();
-    const endTime = new Date(endLocal).toISOString();
- 
-    try {
-      const res = await fetch(
-        `/api/lifecycle/listings/${listingId}/pickup-slots?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}&capacity=${capacity}`,
-        { method: "POST", headers: { "Authorization": getToken() } }
-      );
-      const data = await res.json().catch(() => ({}));
- 
-      if (!res.ok) {
-        showError(data.detail || "Could not add this pickup slot.");
-        return;
-      }
- 
-      showSuccess("Pickup slot added.");
-      document.getElementById("slotStart").value = "";
-      document.getElementById("slotEnd").value = "";
-      document.getElementById("slotCapacity").value = "";
-      loadSlots(listingId);
-    } catch (err) {
-      showError("Could not reach the server.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Add pickup slot";
     }
   }
  

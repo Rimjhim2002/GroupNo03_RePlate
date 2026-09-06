@@ -96,7 +96,6 @@
       <a class="nav-link" href="/ngo-donations-view" style="display:none">NGO Donations</a>
       <a class="nav-link" href="/consumer-search">Nearby Food</a>
       <a class="nav-link" href="/consumer-history">Transaction History</a>
-      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
     </div>
     <button
       id="userLabel"
@@ -143,9 +142,9 @@
       if (!res.ok) return;
       const user = await res.json();
       const allowed = {
-        restaurant: ["/listings-view", "/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
-        ngo: ["/marketplace", "/ngo-donations-view", "/pickup-slots-view", "/recommendations-view"],
-        consumer: ["/consumer-search", "/consumer-history", "/pickup-slots-view", "/recommendations-view"],
+        restaurant: ["/listings-view", "/marketplace", "/ngo-donations-view", "/recommendations-view"],
+        ngo: ["/marketplace", "/ngo-donations-view", "/recommendations-view"],
+        consumer: ["/consumer-search", "/consumer-history", "/recommendations-view"],
       };
       const links = document.querySelectorAll(".nav-link");
       links.forEach((link) => {

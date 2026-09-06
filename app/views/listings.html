@@ -366,6 +366,36 @@
   }
 
   .listing-actions button { background: #E6EEFB; border-color: #E6EEFB; }
+
+  .pickup-slot-editor {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px auto;
+    gap: 6px;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  .pickup-slot-editor input,
+  .pickup-slot-editor button {
+    min-width: 0;
+    padding: 7px 6px;
+    border: 1px solid #DDE5F0;
+    border-radius: 7px;
+    font: 600 11px inherit;
+    color: var(--navy);
+  }
+
+  .pickup-slot-editor button {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--white);
+    cursor: pointer;
+  }
+
+  @media (max-width: 640px) {
+    .pickup-slot-editor { grid-template-columns: 1fr 1fr; }
+    .pickup-slot-editor button { grid-column: 1 / -1; }
+  }
 </style>
 </head>
 <body>
@@ -380,7 +410,6 @@
       <a class="nav-link" href="/notifications-view">Notifications</a>
       <a class="nav-link" href="/marketplace">Marketplace</a>
       <a class="nav-link" href="/ngo-donations-view" style="display:none">NGO Donations</a>
-      <a class="nav-link" href="/pickup-slots-view">Pickup Slots</a>
       <a class="nav-link" href="/recommendations-view">Recommendations</a>
     </div>
     <button
@@ -426,7 +455,7 @@
         </div>
         <div class="field">
           <label>Listing type</label>
-          <select id="listingType">
+          <select id="listingType" onchange="toggleDonationFields()">
             <option value="sale">Sale</option>
             <option value="donation">Donation</option>
           </select>
@@ -438,18 +467,18 @@
           <label>Quantity</label>
           <input type="number" id="quantity" min="1" placeholder="12" />
         </div>
-        <div class="field">
+        <div class="field donation-field" id="unitField">
           <label>Unit</label>
           <input type="text" id="unit" placeholder="loaf" />
         </div>
       </div>
 
       <div class="field-row">
-        <div class="field">
+        <div class="field donation-field" id="priceField">
           <label>Original price</label>
           <input type="number" id="originalPrice" step="0.01" min="0" placeholder="5.00" />
         </div>
-        <div class="field">
+        <div class="field donation-field" id="discountField">
           <label>Discount %</label>
           <input type="number" id="discountPercentage" min="0" max="100" placeholder="50" />
         </div>
@@ -549,6 +578,13 @@
     document.getElementById("successMsg").classList.remove("visible");
   }
 
+  function toggleDonationFields() {
+    const isDonation = document.getElementById("listingType").value === "donation";
+    document.querySelectorAll(".donation-field").forEach((field) => {
+      field.style.display = isDonation ? "none" : "block";
+    });
+  }
+
   function renderListings(listings) {
     const grid = document.getElementById("listingsGrid");
     document.getElementById("listingsCount").textContent =
@@ -566,6 +602,19 @@
       const expiryStr = expiry.toLocaleString(undefined, {
         month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
       });
+
+      const pickupSlots = listing.pickup_slots || [];
+      const pickupSlotsMarkup = pickupSlots.length
+        ? pickupSlots.map((slot) => {
+            const start = new Date(slot.start_time).toLocaleString(undefined, {
+              month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+            });
+            const end = new Date(slot.end_time).toLocaleTimeString([], {
+              hour: "numeric", minute: "2-digit"
+            });
+            return `<span>${start} - ${end} (${slot.booked_count}/${slot.capacity} booked)</span>`;
+          }).join("")
+        : "<span>No pickup slots added yet.</span>";
 
       return `
         <div class="listing-card">
@@ -588,6 +637,16 @@
             <span>Available: <strong>${listing.available_quantity} / ${listing.quantity} ${escapeHtml(listing.unit)}</strong></span>
             <span>Pickup: <strong>${escapeHtml(listing.pickup_location)}</strong></span>
             <span>Expires: <strong>${expiryStr}</strong></span>
+          </div>
+          <div class="listing-meta">
+            <span>Pickup slots:</span>
+            ${pickupSlotsMarkup}
+            <div class="pickup-slot-editor">
+              <input type="datetime-local" id="slot-start-${listing.id}" aria-label="Pickup slot start" />
+              <input type="datetime-local" id="slot-end-${listing.id}" aria-label="Pickup slot end" />
+              <input type="number" id="slot-capacity-${listing.id}" min="1" placeholder="Capacity" aria-label="Pickup slot capacity" />
+              <button type="button" onclick="addPickupSlot('${listing.id}')">Add slot</button>
+            </div>
           </div>
           ${listing.status !== "expired" ? `
             <div class="listing-actions">
@@ -615,6 +674,16 @@
       const res = await fetch("/listings/mine", { headers: { "Authorization": getToken() } });
       if (!res.ok) return;
       const listings = await res.json();
+      await Promise.all(listings.map(async (listing) => {
+        try {
+          const slotsRes = await fetch(`/api/lifecycle/listings/${listing.id}/pickup-slots`, {
+            headers: { "Authorization": getToken() },
+          });
+          listing.pickup_slots = slotsRes.ok ? await slotsRes.json() : [];
+        } catch (err) {
+          listing.pickup_slots = [];
+        }
+      }));
       renderListings(listings);
     } catch (err) {
       // silently ignore — grid keeps its previous state
@@ -629,6 +698,41 @@
     });
     if (!res.ok) showError("Could not update listing status.");
     else { showSuccess("Listing status updated."); loadListings(); }
+  }
+
+  async function addPickupSlot(listingId) {
+    const startInput = document.getElementById(`slot-start-${listingId}`);
+    const endInput = document.getElementById(`slot-end-${listingId}`);
+    const capacityInput = document.getElementById(`slot-capacity-${listingId}`);
+    const startTime = startInput.value;
+    const endTime = endInput.value;
+    const capacity = Number.parseInt(capacityInput.value, 10);
+
+    if (!startTime || !endTime || !capacity || capacity < 1) {
+      showError("Enter start time, end time, and a positive capacity.");
+      return;
+    }
+    if (new Date(endTime) <= new Date(startTime)) {
+      showError("Pickup slot end time must be after its start time.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      start_time: new Date(startTime).toISOString(),
+      end_time: new Date(endTime).toISOString(),
+      capacity: String(capacity),
+    });
+    const res = await fetch(`/api/lifecycle/listings/${listingId}/pickup-slots?${params}`, {
+      method: "POST",
+      headers: { "Authorization": getToken() },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showError(data.detail || "Could not add pickup slot.");
+      return;
+    }
+    showSuccess("Pickup slot added to the listing.");
+    loadListings();
   }
 
   async function applySuggestedDiscount(id) {
@@ -664,9 +768,15 @@
       category: document.getElementById("category").value.trim(),
       listing_type: document.getElementById("listingType").value,
       quantity: parseInt(document.getElementById("quantity").value, 10),
-      unit: document.getElementById("unit").value.trim(),
-      original_price: parseFloat(document.getElementById("originalPrice").value),
-      discount_percentage: parseFloat(document.getElementById("discountPercentage").value || "0"),
+      unit: document.getElementById("listingType").value === "donation"
+        ? "unit"
+        : document.getElementById("unit").value.trim(),
+      original_price: document.getElementById("listingType").value === "donation"
+        ? 0
+        : parseFloat(document.getElementById("originalPrice").value),
+      discount_percentage: document.getElementById("listingType").value === "donation"
+        ? 0
+        : parseFloat(document.getElementById("discountPercentage").value || "0"),
       expiry_date: expiryLocal ? new Date(expiryLocal).toISOString() : null,
       pickup_location: document.getElementById("pickupLocation").value.trim(),
     };
@@ -710,6 +820,7 @@
     }
   }
 
+  toggleDonationFields();
   guardPage();
 </script>
 
