@@ -61,14 +61,35 @@ async def claim_donation(food_listing_id: str, quantity: int, current_user: User
  
  
 @router.get("/ngo/claims")
-async def my_claims(current_user: User = Depends(get_current_user)):
+async def my_claims(current_user: User = Depends(require_role(UserRole.NGO))):
     return await ngo_service.get_ngo_claims(current_user)
  
  
 @router.post("/ngo/claims/{transaction_id}/complete")
-async def complete_claim(transaction_id: str):
+async def complete_claim(
+    transaction_id: str,
+    current_user: User = Depends(require_role(UserRole.NGO)),
+):
     try:
-        return await ngo_service.mark_donation_completed(transaction_id)
+        transaction = await ngo_service.mark_donation_completed(transaction_id, current_user)
+        return {"transaction_id": str(transaction.id), "status": transaction.status}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/restaurant/claims")
+async def restaurant_claims(current_user: User = Depends(require_role(UserRole.RESTAURANT))):
+    return await ngo_service.get_restaurant_claims(current_user)
+
+
+@router.post("/restaurant/claims/{transaction_id}/confirm-pickup")
+async def restaurant_confirm_pickup(
+    transaction_id: str,
+    current_user: User = Depends(require_role(UserRole.RESTAURANT)),
+):
+    try:
+        transaction = await ngo_service.confirm_restaurant_pickup(transaction_id, current_user)
+        return {"transaction_id": str(transaction.id), "status": transaction.status}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
  

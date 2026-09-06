@@ -18,6 +18,8 @@ from app.routes import (
     rating_routes,
     report_routes,
 )
+from app.routes.consumer_routes import feature_router as consumer_api_router
+from app.routes.notification_routes import feature_router as notification_api_router
 from app.services.expiry_monitor import monitor_expiry
 
 
@@ -64,8 +66,10 @@ app.include_router(auth_routes.router)
 app.include_router(dashboard_routes.router)
 app.include_router(food_listing_routes.router)
 app.include_router(consumer_routes.router)
+app.include_router(consumer_api_router)
 app.include_router(lifecycle_routes.router)
 app.include_router(notification_routes.router)
+app.include_router(notification_api_router)
 app.include_router(analytics_routes.router)
 app.include_router(rating_routes.router)
 app.include_router(report_routes.router)
@@ -99,6 +103,11 @@ async def serve_consumer_search_page():
 @app.get("/consumer-history")
 async def serve_consumer_history_page():
     return serve_html_file("consumer_history.html")
+
+
+@app.get("/consumer-discovery-view")
+async def serve_consumer_discovery_page():
+    return serve_html_file("consumer-discovery.html")
 
 
 @app.get("/recommendations-view")

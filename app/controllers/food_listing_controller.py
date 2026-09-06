@@ -97,6 +97,20 @@ async def list_available_listings() -> list[FoodListingRead]:
     ]
 
 
+async def list_marketplace_listings() -> list[FoodListingRead]:
+    listings = await FoodListing.find(
+        {
+            "approval_status": ListingApprovalStatus.APPROVED.value,
+            "status": {"$in": [ListingStatus.AVAILABLE.value, ListingStatus.EXPIRED.value]},
+        }
+    ).to_list()
+    await expire_listings([listing for listing in listings if listing.status == ListingStatus.AVAILABLE])
+    return [
+        _to_food_listing_read(listing, str(listing.restaurant.ref.id))
+        for listing in listings
+    ]
+
+
 async def list_pending_listings() -> list[FoodListingRead]:
     listings = await FoodListing.find(
         FoodListing.approval_status == ListingApprovalStatus.PENDING
@@ -173,7 +187,7 @@ async def update_status(
 async def expire_listings(listings: list[FoodListing] | None = None) -> int:
     if listings is None:
         listings = await FoodListing.find(
-            FoodListing.status == ListingStatus.AVAILABLE
+            {"status": ListingStatus.AVAILABLE.value}
         ).to_list()
     expired = 0
     now = datetime.now(timezone.utc)

@@ -56,6 +56,8 @@ async def join_waitlist(consumer_id: str, food_listing_id: str) -> Waitlist:
     food_listing = await FoodListing.get(food_listing_id)
     if food_listing is None:
         raise ValueError("Food listing not found")
+    if food_listing.available_quantity > 0 or food_listing.status != ListingStatus.RESERVED:
+        raise ValueError("This food listing still has available quantity and cannot be waitlisted.")
     consumer = await User.get(consumer_id)
     if consumer is None:
         raise ValueError("User not found")
