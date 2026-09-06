@@ -367,6 +367,13 @@
 
   .listing-actions button { background: #E6EEFB; border-color: #E6EEFB; }
 
+  .claims-section { margin-top: 28px; }
+  .confirm-btn {
+    margin-top: 10px; padding: 8px 12px; border: 1px solid var(--blue);
+    border-radius: 7px; background: var(--blue); color: var(--white);
+    font: 600 12px inherit; cursor: pointer;
+  }
+
   .pickup-slot-editor {
     display: grid;
     grid-template-columns: 1fr 1fr 80px auto;
@@ -506,6 +513,10 @@
       <div class="listings-grid" id="listingsGrid">
         <div class="empty-state">No listings yet — create your first one on the left.</div>
       </div>
+      <section class="claims-section" id="restaurantClaimsSection">
+        <h2>Donation pickup verification</h2>
+        <div id="restaurantClaimsContainer"><div class="empty-state">Loading donation claims…</div></div>
+      </section>
     </div>
   </div>
 </div>
@@ -543,6 +554,7 @@
         donationLink.style.display = "inline-block";
       }
       loadListings();
+      if (user.role === "restaurant") loadRestaurantClaims();
     } catch (err) {
       window.location.href = "/";
     }
@@ -733,6 +745,50 @@
     }
     showSuccess("Pickup slot added to the listing.");
     loadListings();
+  }
+
+  async function loadRestaurantClaims() {
+    const container = document.getElementById("restaurantClaimsContainer");
+    try {
+      const res = await fetch("/api/lifecycle/restaurant/claims", {
+        headers: { "Authorization": getToken() },
+      });
+      if (!res.ok) {
+        container.innerHTML = '<div class="empty-state">Could not load donation claims.</div>';
+        return;
+      }
+      const claims = await res.json();
+      if (!claims.length) {
+        container.innerHTML = '<div class="empty-state">No donation claims yet.</div>';
+        return;
+      }
+      container.innerHTML = claims.map((claim) => `
+        <div class="listing-card">
+          <div class="listing-name">${escapeHtml(claim.food_name)}</div>
+          <div class="listing-desc">NGO: ${escapeHtml(claim.ngo_name)}</div>
+          <div class="listing-meta">
+            <span>Quantity: <strong>${claim.quantity}</strong></span>
+            <span>Status: <strong>${escapeHtml(claim.status)}</strong></span>
+            <span>NGO pickup: <strong>${claim.ngo_pickup_confirmed ? "Confirmed" : "Waiting"}</strong></span>
+          </div>
+          ${claim.restaurant_pickup_confirmed ? "<span>Restaurant pickup confirmed</span>" : `<button class="confirm-btn" type="button" onclick="confirmRestaurantPickup('${claim.id}')">Confirm pickup</button>`}
+        </div>
+      `).join("");
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state">Could not reach the server.</div>';
+    }
+  }
+
+  async function confirmRestaurantPickup(transactionId) {
+    const res = await fetch(`/api/lifecycle/restaurant/claims/${transactionId}/confirm-pickup`, {
+      method: "POST",
+      headers: { "Authorization": getToken() },
+    });
+    if (!res.ok) {
+      showError("Could not confirm restaurant pickup.");
+      return;
+    }
+    loadRestaurantClaims();
   }
 
   async function applySuggestedDiscount(id) {

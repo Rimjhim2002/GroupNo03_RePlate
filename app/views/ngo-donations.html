@@ -83,6 +83,14 @@
   }
   .claim-btn:hover { filter: brightness(1.08); }
   .claim-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .claims-section { margin-top: 28px; }
+  .claim-status { color: #5A7189; font-size: 13px; line-height: 1.5; }
+  .confirm-btn {
+    margin-top: 10px; padding: 8px 12px; border: 1px solid #1D4ED8;
+    border-radius: 7px; background: #1D4ED8; color: #FFFFFF;
+    font: 600 12px inherit; cursor: pointer;
+  }
  
   .empty-state {
     background: var(--white); border: 1.5px dashed #DDE5F0; border-radius: 14px;
@@ -123,6 +131,11 @@
   <div id="donationsContainer">
     <div class="empty-state">Loading…</div>
   </div>
+
+  <section class="claims-section">
+    <h2>My donation claims</h2>
+    <div id="claimsContainer"><div class="empty-state">Loading claims…</div></div>
+  </section>
 </div>
  
 <script>
@@ -171,6 +184,7 @@
         showError("You are viewing donation listings in read-only mode. Only verified NGOs can claim them.");
       }
       loadDonations();
+      if (user.role === "ngo") loadClaims();
     } catch (err) {
       window.location.href = "/";
     }
@@ -272,12 +286,59 @@
         return;
       }
  
-      loadDonations(); // refresh so claimed/emptied listings drop off the list
+      loadDonations();
+      loadClaims();
     } catch (err) {
       showError("Could not reach the server.");
       btn.disabled = false;
       btn.textContent = "Claim for donation";
     }
+  }
+
+  async function loadClaims() {
+    const container = document.getElementById("claimsContainer");
+    try {
+      const res = await fetch("/api/lifecycle/ngo/claims", {
+        headers: { "Authorization": getToken() },
+      });
+      if (!res.ok) {
+        container.innerHTML = '<div class="empty-state">Could not load claims.</div>';
+        return;
+      }
+      const claims = await res.json();
+      if (!claims.length) {
+        container.innerHTML = '<div class="empty-state">No donation claims yet.</div>';
+        return;
+      }
+      container.innerHTML = claims.map((claim) => `
+        <div class="listing-card">
+          <div class="listing-name">${escapeHtml(claim.food_name)}</div>
+          <div class="listing-sub">${escapeHtml(claim.pickup_location)}</div>
+          <div class="claim-status">
+            Quantity: <strong>${claim.quantity}</strong><br>
+            Status: <strong>${escapeHtml(claim.status)}</strong><br>
+            NGO pickup: <strong>${claim.ngo_pickup_confirmed ? "Confirmed" : "Waiting"}</strong><br>
+            Restaurant verification: <strong>${claim.restaurant_pickup_confirmed ? "Confirmed" : "Waiting"}</strong>
+          </div>
+          ${claim.ngo_pickup_confirmed ? "" : `<button class="confirm-btn" onclick="confirmNgoPickup('${claim.id}')">Confirm pickup</button>`}
+        </div>
+      `).join("");
+    } catch (err) {
+      container.innerHTML = '<div class="empty-state">Could not reach the server.</div>';
+    }
+  }
+
+  async function confirmNgoPickup(transactionId) {
+    const res = await fetch(`/api/lifecycle/ngo/claims/${transactionId}/complete`, {
+      method: "POST",
+      headers: { "Authorization": getToken() },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showError(data.detail || "Could not confirm NGO pickup.");
+      return;
+    }
+    loadClaims();
   }
  
   applyRoleNavAccess();
